@@ -247,13 +247,69 @@ final class Portfolio_AI_Generator {
     private function openai_image_body($p, $prompt, $ratio) { $body = ['model'=>$p['model_name'], 'prompt'=>$prompt, 'n'=>1, 'size'=>$this->size($ratio), 'response_format'=>'url']; if (!empty($p['negative_prompt'])) $body['negative_prompt'] = $p['negative_prompt']; if (!empty($p['reference_image_id'])) { $ref = wp_get_attachment_url((int)$p['reference_image_id']); if ($ref) $body['reference_image_url'] = esc_url_raw($ref); } return $body; }
     private function nvidia_flux_body($prompt, $ratio) { $dims = $this->dimensions($ratio); return ['prompt'=>$prompt, 'width'=>$dims[0], 'height'=>$dims[1], 'samples'=>1, 'steps'=>4, 'seed'=>0]; }
 
-    private function extract_image_from_response($json, $raw) {
-        if (is_array($json)) {
-            if (!empty($json['data'][0]['url'])) return ['url'=>esc_url_raw($json['data'][0]['url'])]; if (!empty($json['data'][0]['b64_json'])) return ['b64_json'=>$json['data'][0]['b64_json']];
-            if (!empty($json['url'])) return ['url'=>esc_url_raw($json['url'])]; if (!empty($json['image_url'])) return ['url'=>esc_url_raw($json['image_url'])]; if (!empty($json['b64_json'])) return ['b64_json'=>$json['b64_json']]; if (!empty($json['image'])) return ['b64_json'=>$json['image']];
-            if (!empty($json['images'][0]['url'])) return ['url'=>esc_url_raw($json['images'][0]['url'])]; if (!empty($json['images'][0]['b64_json'])) return ['b64_json'=>$json['images'][0]['b64_json']]; if (!empty($json['images'][0]['base64'])) return ['b64_json'=>$json['images'][0]['base64'];]
-            if (!empty($json['artifacts'][0]['base64'])) return ['b64_json'=>$json['artifacts'][0]['base64']]; if (!empty($json['output'][0]) && is_string($json['output'][0])) return preg_match('#^https?://#', $json['output'][0]) ? ['url'=>esc_url_raw($json['output'][0])] : ['b64_json'=>$json['output'][0]];
+private function extract_image_from_response($json, $raw) {
+    if (is_array($json)) {
+        if (!empty($json['data'][0]['url'])) {
+            return ['url' => esc_url_raw($json['data'][0]['url'])];
         }
+
+        if (!empty($json['data'][0]['b64_json'])) {
+            return ['b64_json' => $json['data'][0]['b64_json']];
+        }
+
+        if (!empty($json['url'])) {
+            return ['url' => esc_url_raw($json['url'])];
+        }
+
+        if (!empty($json['image_url'])) {
+            return ['url' => esc_url_raw($json['image_url'])];
+        }
+
+        if (!empty($json['b64_json'])) {
+            return ['b64_json' => $json['b64_json']];
+        }
+
+        if (!empty($json['image'])) {
+            return ['b64_json' => $json['image']];
+        }
+
+        if (!empty($json['images'][0]['url'])) {
+            return ['url' => esc_url_raw($json['images'][0]['url'])];
+        }
+
+        if (!empty($json['images'][0]['b64_json'])) {
+            return ['b64_json' => $json['images'][0]['b64_json']];
+        }
+
+        if (!empty($json['images'][0]['base64'])) {
+            return ['b64_json' => $json['images'][0]['base64']];
+        }
+
+        if (!empty($json['artifacts'][0]['base64'])) {
+            return ['b64_json' => $json['artifacts'][0]['base64']];
+        }
+
+        if (!empty($json['output'][0]) && is_string($json['output'][0])) {
+            if (preg_match('#^https?://#', $json['output'][0])) {
+                return ['url' => esc_url_raw($json['output'][0])];
+            }
+
+            return ['b64_json' => $json['output'][0]];
+        }
+    }
+
+    if (substr((string) $raw, 0, 8) === "\x89PNG\r\n\x1a\n") {
+        return [
+            'binary' => $raw,
+            'mime'   => 'image/png',
+        ];
+    }
+
+    return new WP_Error(
+        'pai_no_image',
+        'Image API response did not contain a recognised image URL or base64 image. Check Debug Logs.'
+    );
+}
         if (substr((string)$raw, 0, 8) === "\x89PNG\r\n\x1a\n") return ['binary'=>$raw, 'mime'=>'image/png'];
         return new WP_Error('pai_no_image', 'Image API response did not contain a recognised image URL or base64 image. Check Debug Logs.');
     }
