@@ -12,13 +12,11 @@
     max-width: 760px;
 }
 
-.pai-generator__header h3,
 .pai-generator h3 {
     margin-top: 0;
     margin-bottom: 0.35rem;
 }
 
-.pai-generator__header p,
 .pai-generator p {
     margin-top: 0;
     opacity: 0.82;
@@ -83,7 +81,8 @@
 }
 
 .pai-result__card {
-    margin-top: 1rem;
+    max-width: 420px;
+    margin: 1rem auto 0;
 }
 
 .pai-result__card img {
@@ -102,7 +101,8 @@
 
 .pai-gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 220px));
+    justify-content: center;
     gap: 1rem;
 }
 
@@ -116,7 +116,8 @@
 .pai-gallery__item img {
     display: block;
     width: 100%;
-    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
 }
 
 .pai-gallery__item figcaption {
