@@ -310,9 +310,6 @@ private function extract_image_from_response($json, $raw) {
         'Image API response did not contain a recognised image URL or base64 image. Check Debug Logs.'
     );
 }
-        if (substr((string)$raw, 0, 8) === "\x89PNG\r\n\x1a\n") return ['binary'=>$raw, 'mime'=>'image/png'];
-        return new WP_Error('pai_no_image', 'Image API response did not contain a recognised image URL or base64 image. Check Debug Logs.');
-    }
 
     private function save_image($result, $slug, $id) {
         require_once ABSPATH.'wp-admin/includes/file.php'; require_once ABSPATH.'wp-admin/includes/media.php'; require_once ABSPATH.'wp-admin/includes/image.php';
