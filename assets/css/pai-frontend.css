@@ -1,0 +1,4 @@
+.pai-generator textarea{width:100%;min-height:90px;margin-bottom:8px}
+.pai-generator .pai-result img{max-width:100%;height:auto;display:block;margin-top:10px}
+.pai-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.pai-gallery img{width:100%;height:auto;display:block}
