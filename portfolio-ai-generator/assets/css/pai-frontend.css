@@ -1,0 +1,126 @@
+.pai-generator,
+.pai-gallery {
+    box-sizing: border-box;
+}
+
+.pai-generator {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    padding: 1.25rem;
+    background: rgba(10, 10, 18, 0.55);
+    backdrop-filter: blur(10px);
+    max-width: 760px;
+}
+
+.pai-generator__header h3,
+.pai-generator h3 {
+    margin-top: 0;
+    margin-bottom: 0.35rem;
+}
+
+.pai-generator__header p,
+.pai-generator p {
+    margin-top: 0;
+    opacity: 0.82;
+}
+
+.pai-label {
+    display: block;
+    font-weight: 700;
+    margin: 0.85rem 0 0.35rem;
+}
+
+.pai-generator textarea,
+.pai-generator select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 0.8rem;
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit;
+}
+
+.pai-generator textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.pai-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.75rem 1.15rem;
+    margin-top: 1rem;
+    cursor: pointer;
+    font-weight: 700;
+    text-decoration: none;
+    background: #ffffff;
+    color: #111111;
+}
+
+.pai-button--secondary {
+    background: rgba(255, 255, 255, 0.12);
+    color: inherit;
+}
+
+.pai-button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+.pai-status {
+    min-height: 1.5rem;
+    margin-top: 0.75rem;
+}
+
+.pai-status--error {
+    color: #ff9b9b;
+}
+
+.pai-result__card {
+    margin-top: 1rem;
+}
+
+.pai-result__card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+}
+
+.pai-result__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.pai-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.pai-gallery__item {
+    margin: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.pai-gallery__item img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.pai-gallery__item figcaption {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
