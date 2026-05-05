@@ -154,6 +154,15 @@ final class PAI_Projects {
             $parts[] = "Project master prompt:\n" . $project['hidden_prompt'];
         }
 
+        if (!empty($project['reference_image_id'])) {
+            $parts[] = "Reference image instruction:\n"
+                . "A reference image is attached. Use it as the primary visual reference for the generated image. "
+                . "Preserve its overall visual identity, style, colour palette, structure, composition cues, and defining details where relevant. "
+                . "If the reference image contains a key subject, object, landmark, or character, keep the important visual traits consistent unless the user request clearly asks for a change. "
+                . "The final result should clearly reflect the attached reference image while still fulfilling the user request. "
+                . "Do not ignore the reference image and do not treat it as only loose inspiration.";
+        }
+
         $parts[] = "User request:\n" . $user_section;
         $parts[] = "Output format:\nCreate a " . $format . " image suitable for a fast portfolio showcase.";
 
