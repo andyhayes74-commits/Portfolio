@@ -1,24 +1,30 @@
 # Portfolio AI Generator
 
-**Current stable version:** v1.3.1  
-**Branch:** `main`  
+**Current branch version:** v1.4.0 candidate  
+**Stable main version:** v1.3.1  
 **Project:** WordPress plugin for controlled AI image generation on portfolio project pages
 
 Portfolio AI Generator lets visitors generate AI images inside a controlled project style. It is designed for creative portfolios, case studies, AI art projects, campaign demos, and interactive project pages where the site owner wants consistent results rather than completely open-ended prompting.
 
-The plugin supports hidden project prompts, public style summaries, Gemini Direct image generation, custom image routes, WordPress Media Library saving, moderation, galleries, reference images, and safe debug logging.
+The plugin supports hidden project prompts, public style summaries, Gemini Direct image generation, custom image routes, WordPress Media Library saving, moderation, configurable galleries, reference images, and safe debug logging.
 
 ---
 
 ## Current status
 
-`main` now contains the latest tested stable version:
+`main` contains the latest stable tested version:
 
 ```text
 v1.3.1
 ```
 
-v1.3.1 includes the v1.3 modular refactor plus reliability fixes from the Codex review.
+This branch contains the v1.4.0 gallery styling and management candidate:
+
+```text
+feature/portfolio-ai-generator-v1.4.0-gallery-styling
+```
+
+Do not merge v1.4.0 into `main` until it has been tested on WordPress.
 
 ---
 
@@ -36,7 +42,7 @@ The detailed plugin README is here:
 portfolio-ai-generator/README.md
 ```
 
-Use that plugin README for install instructions, provider setup, shortcodes, reference image guidance, testing checklist, and rollback notes.
+Use that plugin README for install instructions, provider setup, shortcodes, reference image guidance, gallery settings, testing checklist, and rollback notes.
 
 ---
 
@@ -45,11 +51,16 @@ Use that plugin README for install instructions, provider setup, shortcodes, ref
 - Project-specific hidden master prompts
 - Public style summaries
 - Visitor prompt input
+- Backend-only generation format setting
 - Gemini Direct provider
 - Custom Route provider for LiteLLM/NVIDIA-style routes
 - Optional Gemini reference image attachment ID
 - Generated images saved to WordPress Media Library
 - Gallery submission workflow
+- Configurable gallery styling
+- Gallery image limit for latest N approved images
+- Auto-refresh gallery after approved submission
+- Backend image actions: approve, reject, hide, soft delete
 - Admin moderation
 - History view
 - Debug logs with redaction
@@ -72,52 +83,30 @@ Gallery:
 [portfolio_ai_gallery project="uk_grand_tour"]
 ```
 
+Gallery with override:
+
+```text
+[portfolio_ai_gallery project="uk_grand_tour" limit="8" caption="hide"]
+```
+
 Only approved images appear in the public gallery.
 
 ---
 
-## v1.3.1 structure
+## v1.4.0 highlights
 
-The plugin is now split into smaller files:
-
-```text
-portfolio-ai-generator/
-├── portfolio-ai-generator.php
-├── README.md
-├── CHANGELOG.md
-├── includes/
-│   ├── class-pai-admin.php
-│   ├── class-pai-constants.php
-│   ├── class-pai-gallery.php
-│   ├── class-pai-generator.php
-│   ├── class-pai-logger.php
-│   ├── class-pai-media.php
-│   ├── class-pai-plugin.php
-│   ├── class-pai-projects.php
-│   └── providers/
-│       ├── class-pai-provider-custom-route.php
-│       └── class-pai-provider-gemini-direct.php
-└── assets/
-    ├── css/pai-frontend.css
-    └── js/pai-frontend.js
-```
-
-This structure makes the plugin safer to maintain and easier to extend.
-
----
-
-## v1.3.1 highlights
-
-- Refactored the plugin from one large PHP file into modular classes.
-- Preserved existing shortcodes and database table.
-- Kept Gemini Direct and Custom Route providers.
-- Added Gemini reference image support.
-- Improved gallery/result image sizing.
-- Hardened admin history/moderation query handling.
-- Improved frontend AJAX error display.
-- Reduced fatal error detail leakage to visitors.
-- Improved rate-limit behaviour.
-- Improved binary image save failure handling.
+- Removed public frontend aspect-ratio dropdown.
+- Added backend-only generation format dropdown: portrait, square, landscape.
+- Added per-project gallery display settings.
+- Added gallery image limit.
+- Added gallery thumbnail shape and size controls.
+- Added caption display options.
+- Added card style options.
+- Added optional gallery download links.
+- Added frontend gallery auto-refresh after approved submission.
+- Added backend Hide action.
+- Kept Delete as a soft delete.
+- Added reference image thumbnail preview in project settings.
 
 ---
 
@@ -129,18 +118,26 @@ Provider keys should be entered in WordPress admin settings or stored in private
 
 ---
 
-## Next planned version
+## Testing before merge
 
-### v1.4.0 — Gallery Styling, Management & Backend Generation Format
+Before merging v1.4.0 into `main`, test:
 
-Planned scope:
-
-- Per-project gallery style settings.
-- Gallery limit, for example latest 12 approved images.
-- Backend image management: approve, reject, hide, soft delete.
-- Auto-refresh gallery after image submission.
-- Caption and download-button controls.
-- Backend-only generation format dropdown.
-- Public frontend remains simple: prompt box and generate button.
+- plugin activation
+- API Settings page
+- existing project settings
+- backend generation format dropdown
+- frontend generator without aspect ratio selector
+- Gemini Direct generation
+- Custom Route generation if still needed
+- Media Library image saving
+- History view
+- gallery image limit
+- gallery styling settings
+- gallery submission
+- approved gallery display
+- auto-refresh after approved submission
+- Hide and soft Delete actions
+- debug logs
+- reference image attachment ID and preview
 
 Keep `main` as the latest stable tested version.
