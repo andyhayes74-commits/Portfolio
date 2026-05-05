@@ -100,21 +100,47 @@
 }
 
 .pai-gallery {
+    --pai-gallery-desktop-cols: 3;
+    --pai-gallery-tablet-cols: 2;
+    --pai-gallery-mobile-cols: 1;
+    --pai-gallery-gap: 16px;
+    --pai-gallery-bg: transparent;
+    --pai-card-bg: rgba(255,255,255,0.06);
+    --pai-card-text: inherit;
+    --pai-card-border: rgba(255,255,255,0.16);
+    --pai-card-radius: 16px;
+    --pai-card-padding: 0px;
+    --pai-caption-color: inherit;
+    --pai-caption-bg: rgba(0,0,0,0.58);
     display: grid;
+    grid-template-columns: repeat(var(--pai-gallery-desktop-cols), minmax(0, 1fr));
     justify-content: center;
-    gap: 1rem;
+    gap: var(--pai-gallery-gap);
+    background: var(--pai-gallery-bg);
+    padding: var(--pai-gallery-gap);
+    width: 100%;
 }
 
-.pai-gallery--size-small {
-    grid-template-columns: repeat(auto-fit, minmax(110px, 160px));
+.pai-gallery--max-full {
+    max-width: none;
 }
 
-.pai-gallery--size-medium {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 220px));
+.pai-gallery--max-wide {
+    max-width: 1200px;
 }
 
-.pai-gallery--size-large {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 300px));
+.pai-gallery--max-contained {
+    max-width: 900px;
+}
+
+.pai-gallery--align-center {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.pai-gallery--align-left {
+    margin-left: 0;
+    margin-right: auto;
 }
 
 .pai-gallery__empty {
@@ -124,34 +150,60 @@
 }
 
 .pai-gallery__item {
+    position: relative;
     margin: 0;
     overflow: hidden;
+    color: var(--pai-card-text);
+    background: var(--pai-card-bg);
+    border-radius: var(--pai-card-radius);
+    padding: var(--pai-card-padding);
+}
+
+.pai-gallery--border-on .pai-gallery__item {
+    border: 1px solid var(--pai-card-border);
 }
 
 .pai-gallery--card-soft .pai-gallery__item {
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--pai-card-bg);
 }
 
 .pai-gallery--card-framed .pai-gallery__item {
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--pai-card-border);
+    background: var(--pai-card-bg);
 }
 
 .pai-gallery--card-minimal .pai-gallery__item {
-    background: transparent;
+    background: var(--pai-card-bg);
+}
+
+.pai-gallery--shadow-soft .pai-gallery__item {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+}
+
+.pai-gallery--shadow-strong .pai-gallery__item {
+    box-shadow: 0 18px 54px rgba(0, 0, 0, 0.28);
 }
 
 .pai-gallery__image-link {
     display: block;
     text-decoration: none;
+    overflow: hidden;
+    border-radius: calc(var(--pai-card-radius) - var(--pai-card-padding));
 }
 
 .pai-gallery__item img {
     display: block;
     width: 100%;
     object-fit: cover;
+}
+
+.pai-gallery--crop-cover .pai-gallery__item img {
+    object-fit: cover;
+}
+
+.pai-gallery--crop-contain .pai-gallery__item img {
+    object-fit: contain;
+    background: transparent;
 }
 
 .pai-gallery--shape-square .pai-gallery__item img {
@@ -178,7 +230,29 @@
     gap: 0.45rem;
     padding: 0.75rem;
     font-size: 0.9rem;
-    opacity: 0.88;
+    color: var(--pai-caption-color);
+    opacity: 0.92;
+}
+
+.pai-gallery--caption-size-small .pai-gallery__item figcaption {
+    font-size: 0.82rem;
+}
+
+.pai-gallery--caption-size-medium .pai-gallery__item figcaption {
+    font-size: 0.95rem;
+}
+
+.pai-gallery--caption-size-large .pai-gallery__item figcaption {
+    font-size: 1.08rem;
+}
+
+.pai-gallery--caption-pos-overlay .pai-gallery__item figcaption {
+    position: absolute;
+    left: var(--pai-card-padding);
+    right: var(--pai-card-padding);
+    bottom: var(--pai-card-padding);
+    background: var(--pai-caption-bg);
+    backdrop-filter: blur(8px);
 }
 
 .pai-gallery__caption-text {
@@ -189,4 +263,17 @@
     font-size: 0.85rem;
     font-weight: 700;
     text-decoration: none;
+    color: inherit;
+}
+
+@media (max-width: 900px) {
+    .pai-gallery {
+        grid-template-columns: repeat(var(--pai-gallery-tablet-cols), minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .pai-gallery {
+        grid-template-columns: repeat(var(--pai-gallery-mobile-cols), minmax(0, 1fr));
+    }
 }
