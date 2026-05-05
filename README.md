@@ -1,7 +1,7 @@
 # Portfolio AI Generator
 
-**Current branch version:** v1.4.1 candidate  
-**Stable main version:** v1.3.1  
+**Current stable version:** v1.4.1  
+**Branch:** `main`  
 **Project:** WordPress plugin for controlled AI image generation on portfolio project pages
 
 Portfolio AI Generator lets visitors generate AI images inside a controlled project style. It is designed for creative portfolios, case studies, AI art projects, campaign demos, and interactive project pages where the site owner wants consistent results rather than completely open-ended prompting.
@@ -12,25 +12,13 @@ The plugin supports hidden project prompts, public style summaries, multi-provid
 
 ## Current status
 
-`main` contains the latest stable tested version:
+`main` now contains the latest tested stable version:
 
 ```text
-v1.3.1
+v1.4.1
 ```
 
-The v1.4.0 branch contains gallery styling and management work:
-
-```text
-feature/portfolio-ai-generator-v1.4.0-gallery-styling
-```
-
-This branch contains the v1.4.1 multi-provider candidate:
-
-```text
-feature/portfolio-ai-generator-v1.4.1-multi-provider
-```
-
-Do not merge v1.4.1 into `main` until it has been tested on WordPress.
+The old v1.4.x feature branches have been merged and removed. Continue new work from `main`.
 
 ---
 
@@ -87,7 +75,7 @@ Use for style-critical portfolio projects where matching the original ChatGPT/Op
 Settings include:
 
 ```text
-OpenAI API key
+OpenAI credential
 OpenAI base URL
 OpenAI image model
 OpenAI quality
@@ -102,25 +90,11 @@ gpt-image-1.5
 gpt-image-1
 ```
 
-Recommended first test:
-
-```text
-gpt-image-1-mini + medium
-```
-
-Recommended style-critical test:
-
-```text
-chatgpt-image-latest + medium
-```
-
-When a project has a reference image attachment ID, OpenAI Direct now sends that Media Library image through the OpenAI image edits endpoint.
+When a project has a reference image attachment ID, OpenAI Direct sends that Media Library image through the OpenAI image edits endpoint.
 
 ### Gemini Direct
 
-Use for Gemini image generation and reference-image testing.
-
-Gemini Direct can send the Media Library reference image as inline image data.
+Use for Gemini image generation and reference-image testing. Gemini Direct can send the Media Library reference image as inline image data.
 
 ### Custom Route
 
@@ -132,7 +106,7 @@ Use for LiteLLM/NVIDIA-style routes or other OpenAI-compatible/custom endpoints.
 
 Gemini Direct sends the actual reference image bytes to Google.
 
-OpenAI Direct now also supports reference-image generation by sending the selected Media Library image to the OpenAI image edits endpoint. This should improve project-level consistency for style-driven portfolio work.
+OpenAI Direct also supports reference-image generation by sending the selected Media Library image to the OpenAI image edits endpoint. This should improve project-level consistency for style-driven portfolio work.
 
 Debug logs should show this when OpenAI uses a reference image:
 
@@ -170,10 +144,11 @@ Only approved images appear in the public gallery.
 ## v1.4.1 highlights
 
 - Added OpenAI Direct image provider.
-- Added OpenAI settings for API key, base URL, image model, and quality.
+- Added OpenAI settings for credential, base URL, image model, and quality.
 - Added OpenAI Direct to the global default provider selector.
 - Added per-project image provider selector.
 - Added OpenAI reference-image support through the image edits endpoint.
+- Fixed gallery shortcode empty-limit handling so galleries no longer collapse to one image.
 - Kept Gemini Direct and Custom Route providers.
 - Routed generation through the selected project provider.
 - Preserved the shared Media Library, History, Moderation, and Gallery pipeline.
@@ -181,7 +156,7 @@ Only approved images appear in the public gallery.
 
 ---
 
-## v1.4.0 highlights included in this branch
+## v1.4.0 highlights included
 
 - Removed public frontend aspect-ratio dropdown.
 - Added backend-only generation format dropdown: portrait, square, landscape.
@@ -201,24 +176,23 @@ Only approved images appear in the public gallery.
 
 ## Do not commit secrets
 
-Do not commit API keys, Gemini keys, OpenAI keys, LiteLLM keys, or server credentials to this repository.
+Do not commit provider credentials or server credentials to this repository.
 
-Provider keys should be entered in WordPress admin settings or stored in private server-side configuration.
+Provider credentials should be entered in WordPress admin settings or stored in private server-side configuration.
 
 ---
 
-## Testing before merge
+## Testing checklist
 
-Before merging v1.4.1 into `main`, test:
+Before treating a fresh install as stable, test:
 
 - plugin activation
 - API Settings page
 - OpenAI settings save correctly
 - project provider dropdown saves correctly
-- OpenAI Direct generation with `gpt-image-1-mini`
+- OpenAI Direct generation
 - OpenAI Direct reference-image generation with a Media Library attachment ID
 - OpenAI debug log shows `request_mode: edit_with_reference`
-- OpenAI Direct generation with `chatgpt-image-latest` if cost is acceptable
 - Gemini Direct generation still works
 - Custom Route generation still works if needed
 - backend generation format dropdown
@@ -231,7 +205,7 @@ Before merging v1.4.1 into `main`, test:
 - approved gallery display
 - auto-refresh after approved submission
 - Hide and soft Delete actions
-- debug logs do not expose provider keys
+- debug logs do not expose provider credentials
 - reference image attachment ID and preview
 
 Keep `main` as the latest stable tested version.
