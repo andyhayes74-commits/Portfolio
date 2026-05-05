@@ -8,12 +8,21 @@ final class PAI_Gallery {
         add_shortcode('portfolio_ai_gallery', array($this, 'shortcode'));
         add_action('wp_ajax_pai_submit_gallery', array($this, 'ajax_submit_gallery'));
         add_action('wp_ajax_nopriv_pai_submit_gallery', array($this, 'ajax_submit_gallery'));
+        add_action('wp_ajax_pai_load_gallery', array($this, 'ajax_load_gallery'));
+        add_action('wp_ajax_nopriv_pai_load_gallery', array($this, 'ajax_load_gallery'));
     }
 
     public function shortcode($atts) {
-        $atts = shortcode_atts(array('project' => '', 'limit' => 24), $atts);
+        $atts = shortcode_atts(array(
+            'project' => '',
+            'limit' => '',
+            'shape' => '',
+            'size' => '',
+            'caption' => '',
+            'download' => '',
+        ), $atts);
+
         $slug = sanitize_key($atts['project']);
-        $limit = max(1, min(100, absint($atts['limit'])));
         $project = PAI_Projects::get($slug);
 
         if (!$project) {
@@ -21,29 +30,36 @@ final class PAI_Gallery {
         }
 
         PAI_Plugin::assets();
+        $settings = PAI_Projects::gallery_settings($project, $atts);
+        $nonce = wp_create_nonce('pai_gallery_' . $slug);
 
-        global $wpdb;
-        $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM " . PAI_Constants::table() . " WHERE project_slug=%s AND status='approved' ORDER BY created_at DESC LIMIT %d",
-            $slug,
-            $limit
+        return $this->render_gallery($slug, $settings, $nonce);
+    }
+
+    public function ajax_load_gallery() {
+        $slug = sanitize_key(wp_unslash($_POST['project'] ?? ''));
+        $nonce = sanitize_text_field(wp_unslash($_POST['nonce'] ?? ''));
+
+        if (!$slug || !wp_verify_nonce($nonce, 'pai_gallery_' . $slug)) {
+            wp_send_json_error(array('message' => 'Gallery security check failed. Refresh the page and try again.'), 403);
+        }
+
+        $project = PAI_Projects::get($slug);
+        if (!$project) {
+            wp_send_json_error(array('message' => 'Gallery project unavailable.'), 404);
+        }
+
+        $settings = PAI_Projects::gallery_settings($project, array(
+            'limit' => sanitize_text_field(wp_unslash($_POST['limit'] ?? '')),
+            'shape' => sanitize_key(wp_unslash($_POST['shape'] ?? '')),
+            'size' => sanitize_key(wp_unslash($_POST['size'] ?? '')),
+            'caption' => sanitize_key(wp_unslash($_POST['caption'] ?? '')),
+            'download' => sanitize_text_field(wp_unslash($_POST['download'] ?? '')),
         ));
 
-        ob_start();
-        echo '<div class="pai-gallery">';
-        if (!$rows) {
-            echo '<p>No approved generated images yet.</p>';
-        }
-        foreach ($rows as $row) {
-            echo '<figure class="pai-gallery__item">';
-            echo '<a href="' . esc_url($row->image_url) . '" target="_blank" rel="noopener noreferrer">';
-            echo '<img src="' . esc_url($row->image_url) . '" alt="' . esc_attr(wp_trim_words($row->user_prompt, 10)) . '" loading="lazy">';
-            echo '</a>';
-            echo '<figcaption>' . esc_html(wp_trim_words($row->user_prompt, 10)) . '</figcaption>';
-            echo '</figure>';
-        }
-        echo '</div>';
-        return ob_get_clean();
+        wp_send_json_success(array(
+            'html' => $this->render_gallery($slug, $settings, $nonce),
+        ));
     }
 
     public function ajax_submit_gallery() {
@@ -73,7 +89,75 @@ final class PAI_Gallery {
 
         wp_send_json_success(array(
             'status' => $status,
+            'auto_refresh' => !empty($project['gallery_auto_refresh']) ? 1 : 0,
             'message' => $status === 'approved' ? 'Image added to gallery.' : 'Image submitted for approval.',
         ));
+    }
+
+    private function render_gallery($slug, $settings, $nonce) {
+        global $wpdb;
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM " . PAI_Constants::table() . " WHERE project_slug=%s AND status='approved' ORDER BY created_at DESC LIMIT %d",
+            $slug,
+            (int) $settings['limit']
+        ));
+
+        $classes = array(
+            'pai-gallery',
+            'pai-gallery--shape-' . sanitize_html_class($settings['shape']),
+            'pai-gallery--size-' . sanitize_html_class($settings['size']),
+            'pai-gallery--card-' . sanitize_html_class($settings['card_style']),
+            'pai-gallery--caption-' . sanitize_html_class($settings['caption']),
+        );
+
+        ob_start();
+        echo '<div class="' . esc_attr(implode(' ', $classes)) . '" data-project="' . esc_attr($slug) . '" data-nonce="' . esc_attr($nonce) . '" data-limit="' . esc_attr((string) $settings['limit']) . '" data-shape="' . esc_attr($settings['shape']) . '" data-size="' . esc_attr($settings['size']) . '" data-caption="' . esc_attr($settings['caption']) . '" data-download="' . esc_attr((string) $settings['download']) . '">';
+
+        if (!$rows) {
+            echo '<p class="pai-gallery__empty">No approved generated images yet.</p>';
+        }
+
+        foreach ($rows as $row) {
+            $caption = $this->caption($row, $settings['caption']);
+            echo '<figure class="pai-gallery__item">';
+            echo '<a class="pai-gallery__image-link" href="' . esc_url($row->image_url) . '" target="_blank" rel="noopener noreferrer">';
+            echo '<img src="' . esc_url($row->image_url) . '" alt="' . esc_attr(wp_trim_words($row->user_prompt, 10)) . '" loading="lazy">';
+            echo '</a>';
+
+            if ($caption || !empty($settings['download'])) {
+                echo '<figcaption>';
+                if ($caption) {
+                    echo '<span class="pai-gallery__caption-text">' . esc_html($caption) . '</span>';
+                }
+                if (!empty($settings['download'])) {
+                    echo '<a class="pai-gallery__download" href="' . esc_url($row->image_url) . '" download target="_blank" rel="noopener noreferrer">Download</a>';
+                }
+                echo '</figcaption>';
+            }
+
+            echo '</figure>';
+        }
+
+        echo '</div>';
+        return ob_get_clean();
+    }
+
+    private function caption($row, $mode) {
+        if ($mode === 'hide') {
+            return '';
+        }
+
+        $date = !empty($row->created_at) ? mysql2date(get_option('date_format'), $row->created_at) : '';
+        $prompt = wp_trim_words($row->user_prompt, 10);
+
+        if ($mode === 'date') {
+            return $date;
+        }
+
+        if ($mode === 'prompt_date') {
+            return trim($prompt . ($date ? ' · ' . $date : ''));
+        }
+
+        return $prompt;
     }
 }
