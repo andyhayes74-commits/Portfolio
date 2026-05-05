@@ -23,6 +23,7 @@ final class PAI_Projects {
             'name' => '',
             'slug' => $slug,
             'enabled' => 1,
+            'provider' => 'global',
             'hidden_prompt' => '',
             'negative_prompt' => '',
             'user_template' => 'Create a {{generation_format}} showcase image based on: {{user_prompt}}.',
@@ -41,6 +42,19 @@ final class PAI_Projects {
             'gallery_download' => 0,
             'gallery_auto_refresh' => 1,
         );
+    }
+
+    public static function allowed_providers() {
+        return array('global', 'gemini_direct', 'openai_direct', 'custom_route');
+    }
+
+    public static function resolve_provider($project) {
+        $provider = sanitize_key($project['provider'] ?? 'global');
+        if ($provider === 'global' || !in_array($provider, self::allowed_providers(), true)) {
+            $provider = get_option(PAI_Constants::OPT_PROVIDER, 'custom_route');
+        }
+
+        return in_array($provider, array('gemini_direct', 'openai_direct', 'custom_route'), true) ? $provider : 'custom_route';
     }
 
     public static function allowed_generation_formats() {
@@ -100,6 +114,11 @@ final class PAI_Projects {
             unset($projects[$original]);
         }
 
+        $provider = sanitize_key(wp_unslash($_POST['provider'] ?? 'global'));
+        if (!in_array($provider, self::allowed_providers(), true)) {
+            $provider = 'global';
+        }
+
         $generation_format = sanitize_key(wp_unslash($_POST['generation_format'] ?? 'portrait'));
         if (!in_array($generation_format, self::allowed_generation_formats(), true)) {
             $generation_format = 'portrait';
@@ -119,6 +138,7 @@ final class PAI_Projects {
             'name' => sanitize_text_field(wp_unslash($_POST['name'] ?? '')),
             'slug' => $slug,
             'enabled' => isset($_POST['enabled']) ? 1 : 0,
+            'provider' => $provider,
             'hidden_prompt' => sanitize_textarea_field(wp_unslash($_POST['hidden_prompt'] ?? '')),
             'negative_prompt' => sanitize_textarea_field(wp_unslash($_POST['negative_prompt'] ?? '')),
             'user_template' => sanitize_textarea_field(wp_unslash($_POST['user_template'] ?? '')),
