@@ -9,6 +9,13 @@
         return $('<div>').text(value || '').html();
     }
 
+    function errorMessage(xhr, fallback) {
+        if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+            return xhr.responseJSON.data.message;
+        }
+        return fallback;
+    }
+
     $(document).on('submit', '.pai-generator__form', function (event) {
         event.preventDefault();
 
@@ -50,8 +57,8 @@
                 $result.html(html).prop('hidden', false);
                 setStatus($status, response.data.message || 'Image generated.', false);
             })
-            .fail(function () {
-                setStatus($status, 'Generation request failed. Please try again.', true);
+            .fail(function (xhr) {
+                setStatus($status, errorMessage(xhr, 'Generation request failed. Please try again.'), true);
             })
             .always(function () {
                 $button.prop('disabled', false);
@@ -82,8 +89,8 @@
                 setStatus($status, response.data.message || 'Submitted.', false);
                 $button.remove();
             })
-            .fail(function () {
-                setStatus($status, 'Submission request failed. Please try again.', true);
+            .fail(function (xhr) {
+                setStatus($status, errorMessage(xhr, 'Submission request failed. Please try again.'), true);
                 $button.prop('disabled', false);
             });
     });
