@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class PAI_Provider_Custom_Route {
-    public function generate($project, $prompt, $ratio) {
+    public function generate($project, $prompt, $format) {
         $base = defined('PORTFOLIO_AI_LITELLM_BASE_URL') ? PORTFOLIO_AI_LITELLM_BASE_URL : get_option(PAI_Constants::OPT_BASE_URL, '');
         $key = defined('PORTFOLIO_AI_LITELLM_API_KEY') ? PORTFOLIO_AI_LITELLM_API_KEY : get_option(PAI_Constants::OPT_API_KEY, '');
         $endpoint = trim((string) get_option(PAI_Constants::OPT_ENDPOINT_PATH, '/v1/images/generations'));
@@ -16,8 +16,8 @@ final class PAI_Provider_Custom_Route {
 
         $mode = $this->endpoint_mode($endpoint);
         $body = $mode === 'nvidia_flux'
-            ? $this->custom_image_body($prompt, $ratio)
-            : $this->openai_image_body($project, $prompt, $ratio);
+            ? $this->custom_image_body($prompt, $format)
+            : $this->openai_image_body($project, $prompt, $format);
 
         $headers = array('Content-Type' => 'application/json');
         $auth = $this->auth_header($key, $endpoint);
@@ -30,6 +30,7 @@ final class PAI_Provider_Custom_Route {
             'url' => $url,
             'endpoint_mode' => $mode,
             'auth_mode' => $this->auth_mode($endpoint),
+            'generation_format' => $format,
             'body_keys' => array_keys($body),
         ));
 
@@ -61,12 +62,12 @@ final class PAI_Provider_Custom_Route {
         return $this->extract_image_from_response($json, $raw);
     }
 
-    private function openai_image_body($project, $prompt, $ratio) {
+    private function openai_image_body($project, $prompt, $format) {
         $body = array(
             'model' => $project['model_name'],
             'prompt' => $prompt,
             'n' => 1,
-            'size' => $this->size($ratio),
+            'size' => $this->openai_size($format),
             'response_format' => 'url',
         );
 
@@ -84,8 +85,8 @@ final class PAI_Provider_Custom_Route {
         return $body;
     }
 
-    private function custom_image_body($prompt, $ratio) {
-        $dims = $this->dimensions($ratio);
+    private function custom_image_body($prompt, $format) {
+        $dims = PAI_Projects::format_size($format);
         return array(
             'prompt' => $prompt,
             'width' => $dims[0],
@@ -122,12 +123,16 @@ final class PAI_Provider_Custom_Route {
         return new WP_Error('pai_no_image', 'Image API response did not contain a recognised image URL or base64 image. Check Debug Logs.');
     }
 
-    private function size($ratio) {
-        return $ratio === 'landscape' ? '1792x1024' : ($ratio === 'portrait' ? '1024x1792' : '1024x1024');
-    }
+    private function openai_size($format) {
+        if ($format === 'landscape') {
+            return '1024x768';
+        }
 
-    private function dimensions($ratio) {
-        return $ratio === 'landscape' ? array(1344, 768) : ($ratio === 'portrait' ? array(768, 1344) : array(1024, 1024));
+        if ($format === 'portrait') {
+            return '768x1024';
+        }
+
+        return '1024x1024';
     }
 
     private function endpoint_mode($endpoint) {

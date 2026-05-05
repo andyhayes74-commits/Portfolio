@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class PAI_Constants {
-    const VERSION = '1.3.1';
+    const VERSION = '1.4.1';
 
     const OPT_PROJECTS = 'pai_projects';
     const OPT_PROVIDER = 'pai_provider';
@@ -18,6 +18,11 @@ final class PAI_Constants {
     const OPT_GEMINI_API_KEY = 'pai_gemini_api_key';
     const OPT_GEMINI_MODEL = 'pai_gemini_model';
     const OPT_GEMINI_PROMPT_LIMIT = 'pai_gemini_prompt_limit';
+
+    const OPT_OPENAI_API_KEY = 'pai_openai_api_key';
+    const OPT_OPENAI_BASE_URL = 'pai_openai_base_url';
+    const OPT_OPENAI_MODEL = 'pai_openai_model';
+    const OPT_OPENAI_QUALITY = 'pai_openai_quality';
 
     const OPT_DISABLED = 'pai_emergency_disabled';
     const OPT_DEBUG = 'pai_debug_enabled';

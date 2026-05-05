@@ -56,6 +56,9 @@ final class PAI_Admin {
         $gemini_model = get_option(PAI_Constants::OPT_GEMINI_MODEL, 'gemini-2.5-flash-image');
         $gemini_limit = (int) get_option(PAI_Constants::OPT_GEMINI_PROMPT_LIMIT, 4000);
         $gemini_limit = $gemini_limit > 0 ? $gemini_limit : 4000;
+        $openai_base = get_option(PAI_Constants::OPT_OPENAI_BASE_URL, 'https://api.openai.com/v1');
+        $openai_model = get_option(PAI_Constants::OPT_OPENAI_MODEL, 'gpt-image-1-mini');
+        $openai_quality = get_option(PAI_Constants::OPT_OPENAI_QUALITY, 'medium');
         ?>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <?php wp_nonce_field('pai_save_settings'); ?>
@@ -63,9 +66,21 @@ final class PAI_Admin {
             <table class="form-table"><tbody>
                 <tr><th>Emergency disable</th><td><label><input type="checkbox" name="disabled" value="1" <?php checked(get_option(PAI_Constants::OPT_DISABLED)); ?>> Disable all public generations</label></td></tr>
                 <tr><th>Debug logging</th><td><label><input type="checkbox" name="debug" value="1" <?php checked(get_option(PAI_Constants::OPT_DEBUG)); ?>> Store safe request/response logs in the Debug Logs tab</label></td></tr>
-                <tr><th>Provider</th><td><select name="provider">
-                    <?php foreach (array('custom_route' => 'Custom Route', 'gemini_direct' => 'Gemini Direct') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($provider, $value, false) . '>' . esc_html($label) . '</option>'; ?>
-                </select><p class="description">Gemini Direct calls Google Gemini from WordPress server-side. Custom Route keeps the LiteLLM/NVIDIA-style route.</p></td></tr>
+                <tr><th>Default provider</th><td><select name="provider">
+                    <?php foreach (array('custom_route' => 'Custom Route', 'gemini_direct' => 'Gemini Direct', 'openai_direct' => 'OpenAI Direct') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($provider, $value, false) . '>' . esc_html($label) . '</option>'; ?>
+                </select><p class="description">Projects can use this default, or override the provider in project settings.</p></td></tr>
+            </tbody></table>
+
+            <h2>OpenAI Direct Settings</h2>
+            <table class="form-table"><tbody>
+                <tr><th>OpenAI API key</th><td><input class="regular-text" type="password" name="openai_api_key" value="<?php echo esc_attr(get_option(PAI_Constants::OPT_OPENAI_API_KEY, '')); ?>" <?php disabled(defined('PORTFOLIO_AI_OPENAI_API_KEY')); ?> autocomplete="off"><p class="description">Stored server-side only. Never exposed to browser JavaScript.</p></td></tr>
+                <tr><th>OpenAI base URL</th><td><input class="regular-text" type="url" name="openai_base_url" value="<?php echo esc_attr($openai_base); ?>" <?php disabled(defined('PORTFOLIO_AI_OPENAI_BASE_URL')); ?>><p class="description">Default: https://api.openai.com/v1</p></td></tr>
+                <tr><th>OpenAI image model</th><td><select name="openai_model">
+                    <?php foreach (array('gpt-image-1-mini' => 'gpt-image-1-mini - cheaper', 'chatgpt-image-latest' => 'chatgpt-image-latest - portfolio style', 'gpt-image-1.5' => 'gpt-image-1.5', 'gpt-image-1' => 'gpt-image-1') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($openai_model, $value, false) . '>' . esc_html($label) . '</option>'; ?>
+                </select></td></tr>
+                <tr><th>OpenAI quality</th><td><select name="openai_quality">
+                    <?php foreach (array('low' => 'Low - cheapest', 'medium' => 'Medium - recommended', 'high' => 'High - expensive', 'auto' => 'Auto') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($openai_quality, $value, false) . '>' . esc_html($label) . '</option>'; ?>
+                </select><p class="description">For public demos, use mini + medium or low. For style-critical portfolio images, test chatgpt-image-latest + medium.</p></td></tr>
             </tbody></table>
 
             <h2>Gemini Direct Settings</h2>
@@ -106,18 +121,43 @@ final class PAI_Admin {
                 <tr><th>Project name</th><td><input class="regular-text" name="name" value="<?php echo esc_attr($project['name']); ?>" required></td></tr>
                 <tr><th>Project slug</th><td><input class="regular-text" name="slug" value="<?php echo esc_attr($project['slug']); ?>" required pattern="[a-z0-9_\-]+"><p class="description">Example: uk_grand_tour</p></td></tr>
                 <tr><th>Enabled</th><td><label><input type="checkbox" name="enabled" value="1" <?php checked($project['enabled']); ?>> Allow public generation</label></td></tr>
+                <tr><th>Image provider</th><td><select name="provider">
+                    <?php foreach (array('global' => 'Use default provider', 'openai_direct' => 'OpenAI Direct', 'gemini_direct' => 'Gemini Direct', 'custom_route' => 'Custom Route') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($project['provider'], $value, false) . '>' . esc_html($label) . '</option>'; ?>
+                </select><p class="description">Use OpenAI for style-critical portfolio projects, Gemini for reference-image testing, or Custom Route for LiteLLM/NVIDIA routes.</p></td></tr>
                 <tr><th>Hidden master prompt</th><td><textarea class="large-text code" rows="7" name="hidden_prompt"><?php echo esc_textarea($project['hidden_prompt']); ?></textarea></td></tr>
                 <tr><th>Negative prompt</th><td><textarea class="large-text code" rows="3" name="negative_prompt"><?php echo esc_textarea($project['negative_prompt']); ?></textarea></td></tr>
-                <tr><th>User prompt template</th><td><textarea class="large-text code" rows="4" name="user_template"><?php echo esc_textarea($project['user_template']); ?></textarea><p class="description">Use {{user_prompt}} and {{aspect_ratio}}.</p></td></tr>
+                <tr><th>User prompt template</th><td><textarea class="large-text code" rows="4" name="user_template"><?php echo esc_textarea($project['user_template']); ?></textarea><p class="description">Use {{user_prompt}}, {{generation_format}}, or {{aspect_ratio}}. The public frontend does not show format choices.</p></td></tr>
                 <tr><th>Public style summary</th><td><textarea class="large-text" rows="3" name="style_summary"><?php echo esc_textarea($project['style_summary']); ?></textarea></td></tr>
-                <tr><th>Model name</th><td><input class="regular-text" name="model_name" value="<?php echo esc_attr($project['model_name']); ?>" required><p class="description">Used by Custom Route providers. Gemini Direct uses the global Gemini model setting.</p></td></tr>
-                <tr><th>Reference image attachment ID</th><td><input type="number" min="0" name="reference_image_id" value="<?php echo esc_attr((string) $project['reference_image_id']); ?>"><p class="description">Gemini Direct can use this image as an inline visual reference.</p></td></tr>
-                <tr><th>Aspect ratios</th><td><input class="regular-text" name="aspect_ratios" value="<?php echo esc_attr(implode(',', (array) $project['aspect_ratios'])); ?>"><p class="description">Allowed: square, landscape, portrait</p></td></tr>
+                <tr><th>Model name</th><td><input class="regular-text" name="model_name" value="<?php echo esc_attr($project['model_name']); ?>" required><p class="description">Used by Custom Route providers only. Gemini and OpenAI Direct use their global model settings.</p></td></tr>
+                <tr><th>Reference image attachment ID</th><td><input type="number" min="0" name="reference_image_id" value="<?php echo esc_attr((string) $project['reference_image_id']); ?>"><p class="description">Gemini Direct sends this image to Google as inline image data. OpenAI Direct v1.4.1 uses this only as prompt guidance; image-byte editing can be added later.</p><?php $this->reference_preview((int) $project['reference_image_id']); ?></td></tr>
+                <tr><th>Generation format</th><td><select name="generation_format">
+                    <?php foreach (array('portrait' => 'Portrait - 768 × 1024 / OpenAI 1024 × 1536', 'square' => 'Square - 1024 × 1024', 'landscape' => 'Landscape - 1024 × 768 / OpenAI 1536 × 1024') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($project['generation_format'], $value, false) . '>' . esc_html($label) . '</option>'; ?>
+                </select><p class="description">Backend-only. Visitors no longer choose aspect ratio on the frontend.</p></td></tr>
                 <tr><th>Daily limit per IP</th><td><input type="number" min="1" max="1000" name="daily_limit" value="<?php echo esc_attr((string) $project['daily_limit']); ?>"></td></tr>
                 <tr><th>Gallery mode</th><td><select name="gallery_mode">
                     <?php foreach (array('off' => 'Off', 'private' => 'Private only', 'pending' => 'Submit to pending', 'approved' => 'Auto approve on submit') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($project['gallery_mode'], $value, false) . '>' . esc_html($label) . '</option>'; ?>
                 </select></td></tr>
             </tbody></table>
+
+            <h2>Gallery Display Settings</h2>
+            <table class="form-table"><tbody>
+                <tr><th>Gallery image limit</th><td><input type="number" min="1" max="100" name="gallery_limit" value="<?php echo esc_attr((string) $project['gallery_limit']); ?>"><p class="description">Shows the latest N approved images. Shortcode limit can override this.</p></td></tr>
+                <tr><th>Thumbnail shape</th><td><select name="gallery_thumb_shape">
+                    <?php foreach (array('square' => 'Square', 'portrait' => 'Portrait', 'landscape' => 'Landscape', 'natural' => 'Natural') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($project['gallery_thumb_shape'], $value, false) . '>' . esc_html($label) . '</option>'; ?>
+                </select></td></tr>
+                <tr><th>Thumbnail size</th><td><select name="gallery_thumb_size">
+                    <?php foreach (array('small' => 'Small', 'medium' => 'Medium', 'large' => 'Large') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($project['gallery_thumb_size'], $value, false) . '>' . esc_html($label) . '</option>'; ?>
+                </select></td></tr>
+                <tr><th>Caption display</th><td><select name="gallery_caption">
+                    <?php foreach (array('hide' => 'Hide captions', 'prompt' => 'Prompt excerpt', 'date' => 'Date', 'prompt_date' => 'Prompt and date') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($project['gallery_caption'], $value, false) . '>' . esc_html($label) . '</option>'; ?>
+                </select></td></tr>
+                <tr><th>Card style</th><td><select name="gallery_card_style">
+                    <?php foreach (array('minimal' => 'Minimal', 'soft' => 'Soft card', 'framed' => 'Framed') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($project['gallery_card_style'], $value, false) . '>' . esc_html($label) . '</option>'; ?>
+                </select></td></tr>
+                <tr><th>Download button</th><td><label><input type="checkbox" name="gallery_download" value="1" <?php checked($project['gallery_download']); ?>> Show download link on gallery cards</label></td></tr>
+                <tr><th>Auto-refresh gallery</th><td><label><input type="checkbox" name="gallery_auto_refresh" value="1" <?php checked($project['gallery_auto_refresh']); ?>> Refresh matching gallery after approved submission</label></td></tr>
+            </tbody></table>
+
             <?php submit_button($edit ? 'Update project' : 'Add project'); ?>
         </form>
         <h2>Configured projects</h2>
@@ -180,7 +220,8 @@ final class PAI_Admin {
             echo '<td>' . esc_html($row->status) . '</td>';
             echo '<td>' . esc_html($row->created_at) . '</td>';
             echo '<td>' . esc_html(wp_trim_words($row->error_message, 12)) . '</td><td>';
-            foreach (array('approved' => 'Approve', 'rejected' => 'Reject', 'deleted' => 'Delete') as $status => $label) {
+            $actions = array('approved' => 'Approve', 'rejected' => 'Reject', 'private' => 'Hide', 'deleted' => 'Delete');
+            foreach ($actions as $status => $label) {
                 echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" style="display:inline-block">';
                 wp_nonce_field('pai_moderate_' . (int) $row->id);
                 echo '<input type="hidden" name="action" value="pai_moderate_image"><input type="hidden" name="id" value="' . esc_attr((string) $row->id) . '"><input type="hidden" name="status" value="' . esc_attr($status) . '"><button class="button" type="submit">' . esc_html($label) . '</button></form> ';
@@ -200,7 +241,14 @@ final class PAI_Admin {
         update_option(PAI_Constants::OPT_DEBUG, isset($_POST['debug']) ? 1 : 0, false);
 
         $provider = sanitize_key(wp_unslash($_POST['provider'] ?? 'custom_route'));
-        update_option(PAI_Constants::OPT_PROVIDER, in_array($provider, array('custom_route', 'gemini_direct'), true) ? $provider : 'custom_route', false);
+        update_option(PAI_Constants::OPT_PROVIDER, in_array($provider, array('custom_route', 'gemini_direct', 'openai_direct'), true) ? $provider : 'custom_route', false);
+
+        update_option(PAI_Constants::OPT_OPENAI_API_KEY, sanitize_text_field(wp_unslash($_POST['openai_api_key'] ?? '')), false);
+        if (!defined('PORTFOLIO_AI_OPENAI_BASE_URL')) update_option(PAI_Constants::OPT_OPENAI_BASE_URL, esc_url_raw(wp_unslash($_POST['openai_base_url'] ?? 'https://api.openai.com/v1')), false);
+        $openai_model = sanitize_text_field(wp_unslash($_POST['openai_model'] ?? 'gpt-image-1-mini'));
+        update_option(PAI_Constants::OPT_OPENAI_MODEL, in_array($openai_model, array('gpt-image-1-mini', 'chatgpt-image-latest', 'gpt-image-1.5', 'gpt-image-1'), true) ? $openai_model : 'gpt-image-1-mini', false);
+        $openai_quality = sanitize_key(wp_unslash($_POST['openai_quality'] ?? 'medium'));
+        update_option(PAI_Constants::OPT_OPENAI_QUALITY, in_array($openai_quality, array('low', 'medium', 'high', 'auto'), true) ? $openai_quality : 'medium', false);
 
         if (!defined('PORTFOLIO_AI_LITELLM_BASE_URL')) update_option(PAI_Constants::OPT_BASE_URL, esc_url_raw(wp_unslash($_POST['base_url'] ?? '')), false);
         if (!defined('PORTFOLIO_AI_LITELLM_API_KEY')) update_option(PAI_Constants::OPT_API_KEY, sanitize_text_field(wp_unslash($_POST['api_key'] ?? '')), false);
@@ -235,9 +283,9 @@ final class PAI_Admin {
         $id = absint($_POST['id'] ?? 0);
         check_admin_referer('pai_moderate_' . $id);
         $status = sanitize_key(wp_unslash($_POST['status'] ?? 'rejected'));
-        if (!in_array($status, array('approved', 'rejected', 'deleted'), true)) $status = 'rejected';
+        if (!in_array($status, array('approved', 'rejected', 'private', 'deleted'), true)) $status = 'rejected';
         $wpdb->update(PAI_Constants::table(), array('status' => $status, 'updated_at' => current_time('mysql')), array('id' => $id), array('%s', '%s'), array('%d'));
-        wp_safe_redirect(admin_url('options-general.php?page=portfolio-ai-generator&tab=moderation&updated=1'));
+        wp_safe_redirect(admin_url('options-general.php?page=portfolio-ai-generator&tab=history&updated=1'));
         exit;
     }
 
@@ -247,5 +295,19 @@ final class PAI_Admin {
         PAI_Logger::clear();
         wp_safe_redirect(admin_url('options-general.php?page=portfolio-ai-generator&tab=logs&updated=1'));
         exit;
+    }
+
+    private function reference_preview($attachment_id) {
+        if (!$attachment_id) {
+            return;
+        }
+
+        $url = wp_get_attachment_image_url($attachment_id, 'thumbnail');
+        if (!$url) {
+            echo '<p class="description">Reference image not found or not an image.</p>';
+            return;
+        }
+
+        echo '<p><img src="' . esc_url($url) . '" style="width:90px;height:auto;border-radius:6px;border:1px solid #ccd0d4;" alt="Reference image preview"></p>';
     }
 }
