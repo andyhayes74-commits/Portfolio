@@ -84,7 +84,7 @@ final class PAI_Projects {
             'auto_refresh' => !empty($project['gallery_auto_refresh']) ? 1 : 0,
         );
 
-        if (isset($overrides['limit'])) {
+        if (isset($overrides['limit']) && $overrides['limit'] !== '') {
             $settings['limit'] = max(1, min(100, absint($overrides['limit'])));
         }
 
