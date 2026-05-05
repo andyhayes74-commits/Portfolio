@@ -16,6 +16,28 @@
         return fallback;
     }
 
+    function refreshMatchingGalleries(project) {
+        $('.pai-gallery[data-project="' + project + '"]').each(function () {
+            var $gallery = $(this);
+
+            $.post(PortfolioAI.ajaxUrl, {
+                action: 'pai_load_gallery',
+                project: project,
+                nonce: $gallery.data('nonce'),
+                limit: $gallery.data('limit'),
+                shape: $gallery.data('shape'),
+                size: $gallery.data('size'),
+                caption: $gallery.data('caption'),
+                download: $gallery.data('download')
+            })
+                .done(function (response) {
+                    if (response && response.success && response.data && response.data.html) {
+                        $gallery.replaceWith(response.data.html);
+                    }
+                });
+        });
+    }
+
     $(document).on('submit', '.pai-generator__form', function (event) {
         event.preventDefault();
 
@@ -29,7 +51,7 @@
             nonce: $form.find('input[name="nonce"]').val(),
             project: $form.find('input[name="project"]').val(),
             prompt: $form.find('textarea[name="prompt"]').val(),
-            aspect_ratio: $form.find('select[name="aspect_ratio"]').val()
+            generation_format: $form.find('input[name="generation_format"]').val()
         };
 
         $button.prop('disabled', true);
@@ -70,6 +92,7 @@
         var $wrap = $button.closest('.pai-generator');
         var $form = $wrap.find('.pai-generator__form');
         var $status = $wrap.find('.pai-status');
+        var project = $form.find('input[name="project"]').val();
 
         $button.prop('disabled', true);
         setStatus($status, 'Submitting image...', false);
@@ -77,7 +100,7 @@
         $.post(PortfolioAI.ajaxUrl, {
             action: 'pai_submit_gallery',
             nonce: $form.find('input[name="nonce"]').val(),
-            project: $form.find('input[name="project"]').val(),
+            project: project,
             id: $button.data('id')
         })
             .done(function (response) {
@@ -88,6 +111,10 @@
                 }
                 setStatus($status, response.data.message || 'Submitted.', false);
                 $button.remove();
+
+                if (response.data && response.data.status === 'approved' && parseInt(response.data.auto_refresh, 10) === 1) {
+                    refreshMatchingGalleries(project);
+                }
             })
             .fail(function (xhr) {
                 setStatus($status, errorMessage(xhr, 'Submission request failed. Please try again.'), true);
