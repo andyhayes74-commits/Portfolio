@@ -36,9 +36,9 @@ final class PAI_Admin {
         if ($tab === 'settings') {
             $this->settings_tab();
         } elseif ($tab === 'moderation') {
-            $this->images_table("WHERE status = 'pending'");
+            $this->images_table('pending');
         } elseif ($tab === 'history') {
-            $this->images_table('');
+            $this->images_table('all');
         } elseif ($tab === 'logs') {
             $this->logs_tab();
         } else {
@@ -152,9 +152,22 @@ final class PAI_Admin {
         <?php
     }
 
-    private function images_table($where) {
+    private function images_table($filter) {
         global $wpdb;
-        $rows = $wpdb->get_results("SELECT * FROM " . PAI_Constants::table() . " $where ORDER BY created_at DESC LIMIT 100");
+        $table = PAI_Constants::table();
+        if ($filter === 'pending') {
+            $query = $wpdb->prepare(
+                "SELECT * FROM $table WHERE status = %s ORDER BY created_at DESC LIMIT %d",
+                'pending',
+                100
+            );
+        } else {
+            $query = $wpdb->prepare(
+                "SELECT * FROM $table ORDER BY created_at DESC LIMIT %d",
+                100
+            );
+        }
+        $rows = $wpdb->get_results($query);
         ?>
         <table class="widefat striped"><thead><tr><th>Image</th><th>Project</th><th>Prompt</th><th>Status</th><th>Created</th><th>Error</th><th>Actions</th></tr></thead><tbody>
         <?php

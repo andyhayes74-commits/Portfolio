@@ -53,12 +53,14 @@ final class PAI_Generator {
         try {
             $this->ajax_generate_inner();
         } catch (Throwable $e) {
+            $error_id = wp_generate_uuid4();
             PAI_Logger::log('fatal', 'Generate handler crashed', array(
+                'error_id' => $error_id,
                 'error' => $e->getMessage(),
                 'file' => basename($e->getFile()),
                 'line' => $e->getLine(),
             ));
-            wp_send_json_error(array('message' => 'Plugin error: ' . $e->getMessage()), 500);
+            wp_send_json_error(array('message' => 'Unexpected plugin error. Please try again later. Ref: ' . $error_id), 500);
         }
     }
 
@@ -191,17 +193,38 @@ final class PAI_Generator {
     }
 
     private function rate_ok($slug, $limit) {
+        $limit = max(1, (int) $limit);
         $key = 'pai_rate_' . $this->ip_hash($slug);
         $count = (int) get_transient($key);
         if ($count >= $limit) {
             return false;
         }
-        set_transient($key, $count + 1, DAY_IN_SECONDS);
+        $expires = strtotime('tomorrow 00:00:00 UTC') - time();
+        if ($expires < HOUR_IN_SECONDS || $expires > DAY_IN_SECONDS) {
+            $expires = DAY_IN_SECONDS;
+        }
+        set_transient($key, $count + 1, $expires);
         return true;
     }
 
     private function ip_hash($slug) {
-        $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
+        $ip = $this->visitor_ip();
         return hash('sha256', $slug . '|' . gmdate('Y-m-d') . '|' . $ip . '|' . wp_salt('auth'));
+    }
+
+    private function visitor_ip() {
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            $ip = '';
+        }
+        $trusted = array('127.0.0.1', '::1');
+        if ($ip && in_array($ip, $trusted, true) && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $forwarded = explode(',', sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR'])));
+            $candidate = trim($forwarded[0]);
+            if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                return $candidate;
+            }
+        }
+        return $ip ?: 'unknown';
     }
 }

@@ -69,9 +69,12 @@ final class PAI_Media {
             'post_status' => 'inherit',
         ), $upload['file']);
 
-        if (!is_wp_error($attachment_id)) {
-            wp_update_attachment_metadata($attachment_id, wp_generate_attachment_metadata($attachment_id, $upload['file']));
+        if (is_wp_error($attachment_id)) {
+            @unlink($upload['file']);
+            return $attachment_id;
         }
+
+        wp_update_attachment_metadata($attachment_id, wp_generate_attachment_metadata($attachment_id, $upload['file']));
 
         return array(
             'attachment_id' => (int) $attachment_id,
