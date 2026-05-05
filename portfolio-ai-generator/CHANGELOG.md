@@ -5,7 +5,7 @@
 ### Security and reliability fixes
 - Hardened admin history/moderation query construction by replacing dynamic SQL fragments with prepared query paths.
 - Removed frontend fatal exception detail leakage; errors now return a generic message with a reference ID while full details remain in debug logs.
-- Improved rate-limit key stability by enforcing a minimum limit and including a user-agent component.
+- Improved rate-limit stability by enforcing a minimum limit and using a consistent daily key.
 - Added constrained proxy-aware visitor IP detection for local reverse-proxy deployments.
 - Updated daily limit windows to expire at UTC day boundaries instead of rolling 24-hour windows.
 - Removed user-agent from rate-limit hashing to avoid easy bypass via header rotation.
