@@ -94,30 +94,32 @@ final class PAI_Generator {
             wp_send_json_error(array('message' => 'Daily generation limit reached.'), 429);
         }
 
+        $provider_name = PAI_Projects::resolve_provider($project);
+        $model_name = $this->model_name_for_provider($provider_name, $project);
         $full_prompt = PAI_Projects::compile_prompt($project, $user_prompt, $format);
-        $image_id = $this->insert_image_row($slug, $user_prompt, $full_prompt, $format, $project['model_name']);
+        $image_id = $this->insert_image_row($slug, $user_prompt, $full_prompt, $format, $model_name);
 
         PAI_Logger::log('info', 'Generation started', array(
             'id' => $image_id,
             'project' => $slug,
-            'provider' => get_option(PAI_Constants::OPT_PROVIDER, 'custom_route'),
-            'model' => $project['model_name'],
+            'provider' => $provider_name,
+            'model' => $model_name,
             'generation_format' => $format,
         ));
 
-        $provider = $this->provider();
+        $provider = $this->provider($provider_name);
         $api_result = $provider->generate($project, $full_prompt, $format);
 
         if (is_wp_error($api_result)) {
             $this->mark_failed($image_id, $api_result->get_error_message());
-            PAI_Logger::log('error', 'Generation failed', array('id' => $image_id, 'error' => $api_result->get_error_message()));
+            PAI_Logger::log('error', 'Generation failed', array('id' => $image_id, 'provider' => $provider_name, 'error' => $api_result->get_error_message()));
             wp_send_json_error(array('message' => $api_result->get_error_message()), 500);
         }
 
         $saved = PAI_Media::save_generated_image($api_result, $slug, $image_id);
         if (is_wp_error($saved)) {
             $this->mark_failed($image_id, $saved->get_error_message());
-            PAI_Logger::log('error', 'Image save failed', array('id' => $image_id, 'error' => $saved->get_error_message()));
+            PAI_Logger::log('error', 'Image save failed', array('id' => $image_id, 'provider' => $provider_name, 'error' => $saved->get_error_message()));
             wp_send_json_error(array('message' => $saved->get_error_message()), 500);
         }
 
@@ -135,7 +137,7 @@ final class PAI_Generator {
             array('%d')
         );
 
-        PAI_Logger::log('info', 'Generation completed', array('id' => $image_id, 'image_url' => $saved['url']));
+        PAI_Logger::log('info', 'Generation completed', array('id' => $image_id, 'provider' => $provider_name, 'image_url' => $saved['url']));
 
         wp_send_json_success(array(
             'id' => $image_id,
@@ -145,10 +147,28 @@ final class PAI_Generator {
         ));
     }
 
-    private function provider() {
-        return get_option(PAI_Constants::OPT_PROVIDER, 'custom_route') === 'gemini_direct'
-            ? new PAI_Provider_Gemini_Direct()
-            : new PAI_Provider_Custom_Route();
+    private function provider($provider_name) {
+        if ($provider_name === 'gemini_direct') {
+            return new PAI_Provider_Gemini_Direct();
+        }
+
+        if ($provider_name === 'openai_direct') {
+            return new PAI_Provider_OpenAI_Direct();
+        }
+
+        return new PAI_Provider_Custom_Route();
+    }
+
+    private function model_name_for_provider($provider_name, $project) {
+        if ($provider_name === 'gemini_direct') {
+            return get_option(PAI_Constants::OPT_GEMINI_MODEL, 'gemini-2.5-flash-image');
+        }
+
+        if ($provider_name === 'openai_direct') {
+            return get_option(PAI_Constants::OPT_OPENAI_MODEL, 'gpt-image-1-mini');
+        }
+
+        return $project['model_name'];
     }
 
     private function generation_format($project) {
