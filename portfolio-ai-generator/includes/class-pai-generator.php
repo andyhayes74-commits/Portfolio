@@ -21,6 +21,7 @@ final class PAI_Generator {
 
         PAI_Plugin::assets();
         $nonce = wp_create_nonce('pai_generate_' . $slug);
+        $format = $this->generation_format($project);
 
         ob_start();
         ?>
@@ -32,14 +33,9 @@ final class PAI_Generator {
             <form class="pai-generator__form">
                 <input type="hidden" name="nonce" value="<?php echo esc_attr($nonce); ?>">
                 <input type="hidden" name="project" value="<?php echo esc_attr($slug); ?>">
+                <input type="hidden" name="generation_format" value="<?php echo esc_attr($format); ?>">
                 <label class="pai-label">Describe the image</label>
                 <textarea name="prompt" maxlength="500" required></textarea>
-                <label class="pai-label">Aspect ratio</label>
-                <select name="aspect_ratio">
-                    <?php foreach ((array) $project['aspect_ratios'] as $ratio) : ?>
-                        <option value="<?php echo esc_attr($ratio); ?>"><?php echo esc_html(ucfirst($ratio)); ?></option>
-                    <?php endforeach; ?>
-                </select>
                 <button class="pai-button" type="submit">Generate Image</button>
             </form>
             <div class="pai-status" aria-live="polite"></div>
@@ -92,28 +88,25 @@ final class PAI_Generator {
             wp_send_json_error(array('message' => 'Prompt must be 3 to 500 characters.'), 400);
         }
 
-        $ratio = sanitize_key(wp_unslash($_POST['aspect_ratio'] ?? 'square'));
-        if (!in_array($ratio, (array) $project['aspect_ratios'], true)) {
-            wp_send_json_error(array('message' => 'Invalid aspect ratio.'), 400);
-        }
+        $format = $this->generation_format($project);
 
         if (!$this->rate_ok($slug, (int) $project['daily_limit'])) {
             wp_send_json_error(array('message' => 'Daily generation limit reached.'), 429);
         }
 
-        $full_prompt = PAI_Projects::compile_prompt($project, $user_prompt, $ratio);
-        $image_id = $this->insert_image_row($slug, $user_prompt, $full_prompt, $ratio, $project['model_name']);
+        $full_prompt = PAI_Projects::compile_prompt($project, $user_prompt, $format);
+        $image_id = $this->insert_image_row($slug, $user_prompt, $full_prompt, $format, $project['model_name']);
 
         PAI_Logger::log('info', 'Generation started', array(
             'id' => $image_id,
             'project' => $slug,
             'provider' => get_option(PAI_Constants::OPT_PROVIDER, 'custom_route'),
             'model' => $project['model_name'],
-            'aspect_ratio' => $ratio,
+            'generation_format' => $format,
         ));
 
         $provider = $this->provider();
-        $api_result = $provider->generate($project, $full_prompt, $ratio);
+        $api_result = $provider->generate($project, $full_prompt, $format);
 
         if (is_wp_error($api_result)) {
             $this->mark_failed($image_id, $api_result->get_error_message());
@@ -158,7 +151,12 @@ final class PAI_Generator {
             : new PAI_Provider_Custom_Route();
     }
 
-    private function insert_image_row($slug, $user_prompt, $full_prompt, $ratio, $model_name) {
+    private function generation_format($project) {
+        $format = sanitize_key($project['generation_format'] ?? 'portrait');
+        return in_array($format, PAI_Projects::allowed_generation_formats(), true) ? $format : 'portrait';
+    }
+
+    private function insert_image_row($slug, $user_prompt, $full_prompt, $format, $model_name) {
         global $wpdb;
         $now = current_time('mysql');
 
@@ -169,7 +167,7 @@ final class PAI_Generator {
                 'user_prompt' => $user_prompt,
                 'full_prompt' => $full_prompt,
                 'status' => 'private',
-                'aspect_ratio' => $ratio,
+                'aspect_ratio' => $format,
                 'model_name' => $model_name,
                 'ip_hash' => $this->ip_hash($slug),
                 'created_at' => $now,
