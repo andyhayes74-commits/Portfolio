@@ -63,7 +63,7 @@ Use that plugin README for install instructions, provider setup, shortcodes, ref
 - Gemini Direct provider
 - Custom Route provider for LiteLLM/NVIDIA-style routes
 - Per-project provider selection
-- Optional Gemini reference image attachment ID
+- Reference image attachment ID for Gemini and OpenAI
 - Generated images saved to WordPress Media Library
 - Gallery submission workflow
 - Configurable gallery styling
@@ -114,9 +114,11 @@ Recommended style-critical test:
 chatgpt-image-latest + medium
 ```
 
+When a project has a reference image attachment ID, OpenAI Direct now sends that Media Library image through the OpenAI image edits endpoint.
+
 ### Gemini Direct
 
-Use for Gemini image generation and current reference-image byte sending.
+Use for Gemini image generation and reference-image testing.
 
 Gemini Direct can send the Media Library reference image as inline image data.
 
@@ -128,9 +130,16 @@ Use for LiteLLM/NVIDIA-style routes or other OpenAI-compatible/custom endpoints.
 
 ## Reference image note
 
-Gemini Direct currently sends the actual reference image bytes to Google.
+Gemini Direct sends the actual reference image bytes to Google.
 
-OpenAI Direct v1.4.1 includes the reference-image guidance in the prompt, but does not yet send the image file itself through an image-edit/reference endpoint. That should be treated as a later OpenAI reference-image patch.
+OpenAI Direct now also supports reference-image generation by sending the selected Media Library image to the OpenAI image edits endpoint. This should improve project-level consistency for style-driven portfolio work.
+
+Debug logs should show this when OpenAI uses a reference image:
+
+```text
+request_mode: edit_with_reference
+has_reference_image: true
+```
 
 ---
 
@@ -164,10 +173,11 @@ Only approved images appear in the public gallery.
 - Added OpenAI settings for API key, base URL, image model, and quality.
 - Added OpenAI Direct to the global default provider selector.
 - Added per-project image provider selector.
+- Added OpenAI reference-image support through the image edits endpoint.
 - Kept Gemini Direct and Custom Route providers.
 - Routed generation through the selected project provider.
 - Preserved the shared Media Library, History, Moderation, and Gallery pipeline.
-- Added OpenAI provider logging for model, quality, size, and generation format.
+- Added OpenAI provider logging for model, quality, size, generation format, and request mode.
 
 ---
 
@@ -206,6 +216,8 @@ Before merging v1.4.1 into `main`, test:
 - OpenAI settings save correctly
 - project provider dropdown saves correctly
 - OpenAI Direct generation with `gpt-image-1-mini`
+- OpenAI Direct reference-image generation with a Media Library attachment ID
+- OpenAI debug log shows `request_mode: edit_with_reference`
 - OpenAI Direct generation with `chatgpt-image-latest` if cost is acceptable
 - Gemini Direct generation still works
 - Custom Route generation still works if needed
