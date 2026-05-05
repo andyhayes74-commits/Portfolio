@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Portfolio AI Generator
- * Description: Controlled AI image generator for portfolio project pages with modular Gemini, OpenAI, and custom-route providers, hidden project prompts, moderation, galleries, styling controls, and safe debug logging.
- * Version: 1.4.1
+ * Description: Controlled AI image generator for portfolio project pages with modular Gemini, OpenAI, and custom-route providers, hidden project prompts, moderation, highly customisable galleries, and safe debug logging.
+ * Version: 1.5.0
  * Author: Andy Hayes
  * Text Domain: portfolio-ai-generator
  */
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('PAI_VERSION', '1.4.1');
+define('PAI_VERSION', '1.5.0');
 define('PAI_PLUGIN_FILE', __FILE__);
 define('PAI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PAI_PLUGIN_URL', plugin_dir_url(__FILE__));
