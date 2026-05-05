@@ -1,18 +1,18 @@
 # Portfolio AI Generator
 
-**Version:** 1.3.0 refactor branch  
-**Status:** Test branch, not yet merged into `main`  
+**Version:** 1.3.1  
+**Status:** Stable on `main`  
 **Plugin type:** WordPress image generation plugin for portfolio and project pages
 
-Portfolio AI Generator lets visitors generate AI images inside a controlled project style. Each project can have hidden master prompts, public style descriptions, generation limits, gallery moderation, and provider settings. The plugin is designed for creative portfolios where consistency matters more than raw prompt freedom.
+Portfolio AI Generator lets visitors generate AI images inside a controlled project style. Each project can have hidden master prompts, public style descriptions, generation limits, gallery moderation, provider settings, and optional reference image guidance.
+
+The plugin is designed for creative portfolios where consistency matters more than raw prompt freedom.
 
 ---
 
-## What v1.3.0 changes
+## What v1.3.1 includes
 
-Version 1.3.0 is primarily a **structural refactor** of the working v1.2.0 Gemini Direct plugin.
-
-The goal is to make the plugin safer to maintain, easier to extend, and less likely to break from small edits.
+Version 1.3.1 includes the v1.3 modular refactor plus reliability and security improvements.
 
 ### Main changes
 
@@ -25,6 +25,11 @@ The goal is to make the plugin safer to maintain, easier to extend, and less lik
 - Adds cleaner separation between admin logic, provider logic, media handling, gallery display, and generation.
 - Adds Gemini reference image support through the existing reference image attachment ID field.
 - Improves frontend image sizing for generated previews and gallery thumbnails.
+- Hardens admin history/moderation query handling.
+- Improves frontend AJAX error display.
+- Reduces fatal error detail leakage to visitors.
+- Improves rate-limit behaviour.
+- Improves binary image save failure handling.
 
 ---
 
@@ -34,6 +39,7 @@ The goal is to make the plugin safer to maintain, easier to extend, and less lik
 portfolio-ai-generator/
 ├── portfolio-ai-generator.php
 ├── README.md
+├── CHANGELOG.md
 ├── includes/
 │   ├── class-pai-admin.php
 │   ├── class-pai-constants.php
@@ -127,11 +133,7 @@ Handles Custom Route image generation, including LiteLLM/NVIDIA-style routes and
 
 ### 1. Download or copy the plugin folder
 
-Use the full `portfolio-ai-generator` folder from this branch:
-
-```text
-feature/portfolio-ai-generator-v1.3.0-refactor
-```
+Use the full `portfolio-ai-generator` folder from `main`.
 
 Upload it to:
 
@@ -447,9 +449,9 @@ Only use constants in private server config files, not in the public repository.
 
 ---
 
-## Testing checklist for v1.3.0
+## Testing checklist
 
-Before merging v1.3.0 into `main`, test the following on WordPress:
+Before deploying a new plugin version, test the following on WordPress:
 
 - Plugin activates without fatal errors.
 - API Settings page loads.
@@ -470,22 +472,16 @@ Before merging v1.3.0 into `main`, test the following on WordPress:
 
 ## Rollback plan
 
-If v1.3.0 fails during testing, roll back to the current stable `main` version.
+If the plugin fails during testing, roll back to the previous stable version.
 
-Current stable baseline before v1.3.0:
-
-```text
-v1.2.0 Gemini Direct
-```
-
-If the site breaks after installing v1.3.0, disable the plugin by renaming its folder:
+If the site breaks after installing a new version, disable the plugin by renaming its folder:
 
 ```bash
 sudo mv /home/portfolio.hayfam.co.uk/public_html/wp-content/plugins/portfolio-ai-generator \
 /home/portfolio.hayfam.co.uk/public_html/wp-content/plugins/portfolio-ai-generator-disabled
 ```
 
-Then reinstall the stable v1.2.0 plugin folder.
+Then reinstall the last stable plugin folder.
 
 ---
 
@@ -502,15 +498,18 @@ Then reinstall the stable v1.2.0 plugin folder.
 
 ## Suggested next versions
 
-### v1.4.0 — Gallery Styling and Auto Refresh
+### v1.4.0 — Gallery Styling, Management and Auto Refresh
 
 Planned features:
 
 - Per-project gallery layout settings.
+- Gallery image limit, for example latest 12 approved images.
+- Backend image actions: approve, reject, hide, soft delete.
 - Thumbnail size options.
 - Caption on/off.
 - Download button on/off.
 - Crop mode options.
+- Backend-only generation format dropdown.
 - Auto-refresh gallery after image submission.
 
 ### v1.5.0 — Provider and Reference Image Polish
@@ -536,6 +535,6 @@ Planned features:
 
 ## Current recommendation
 
-Treat v1.3.0 as a **test branch** until it has been installed and tested on the live WordPress site.
+Use `main` as the latest stable plugin version.
 
-Do not merge v1.3.0 into `main` until the testing checklist passes.
+Build new work on feature branches and merge only after testing on WordPress.
