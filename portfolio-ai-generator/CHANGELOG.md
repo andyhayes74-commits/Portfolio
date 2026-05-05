@@ -23,6 +23,7 @@
 - Default generation format is portrait.
 - Updated custom-route generation sizes to use faster showcase-friendly dimensions.
 - Added reference image thumbnail preview in project settings.
+- Strengthened prompt guidance when a project reference image is attached so Gemini treats it as the primary visual reference, not loose inspiration.
 
 ## v1.3.1 - 2026-05-05
 
