@@ -41,6 +41,26 @@ final class PAI_Projects {
             'gallery_card_style' => 'soft',
             'gallery_download' => 0,
             'gallery_auto_refresh' => 1,
+            'gallery_desktop_columns' => 3,
+            'gallery_tablet_columns' => 2,
+            'gallery_mobile_columns' => 1,
+            'gallery_gap' => 'medium',
+            'gallery_crop_mode' => 'cover',
+            'gallery_max_width' => 'full',
+            'gallery_alignment' => 'center',
+            'gallery_background_color' => 'transparent',
+            'gallery_card_background_color' => 'rgba(255,255,255,0.06)',
+            'gallery_card_text_color' => 'inherit',
+            'gallery_card_border_color' => 'rgba(255,255,255,0.16)',
+            'gallery_card_border_enabled' => 0,
+            'gallery_card_radius' => 16,
+            'gallery_card_padding' => 'none',
+            'gallery_card_shadow' => 'none',
+            'gallery_caption_position' => 'below',
+            'gallery_caption_color' => 'inherit',
+            'gallery_caption_background_color' => 'rgba(0,0,0,0.58)',
+            'gallery_caption_text_size' => 'small',
+            'gallery_caption_words' => 10,
         );
     }
 
@@ -82,6 +102,26 @@ final class PAI_Projects {
             'card_style' => self::choice($project['gallery_card_style'] ?? 'soft', array('minimal', 'soft', 'framed'), 'soft'),
             'download' => !empty($project['gallery_download']) ? 1 : 0,
             'auto_refresh' => !empty($project['gallery_auto_refresh']) ? 1 : 0,
+            'desktop_columns' => max(1, min(6, absint($project['gallery_desktop_columns'] ?? 3))),
+            'tablet_columns' => max(1, min(4, absint($project['gallery_tablet_columns'] ?? 2))),
+            'mobile_columns' => max(1, min(2, absint($project['gallery_mobile_columns'] ?? 1))),
+            'gap' => self::choice($project['gallery_gap'] ?? 'medium', array('none', 'small', 'medium', 'large'), 'medium'),
+            'crop_mode' => self::choice($project['gallery_crop_mode'] ?? 'cover', array('cover', 'contain'), 'cover'),
+            'max_width' => self::choice($project['gallery_max_width'] ?? 'full', array('full', 'wide', 'contained'), 'full'),
+            'alignment' => self::choice($project['gallery_alignment'] ?? 'center', array('left', 'center'), 'center'),
+            'background_color' => self::css_color($project['gallery_background_color'] ?? 'transparent', 'transparent'),
+            'card_background_color' => self::css_color($project['gallery_card_background_color'] ?? 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0.06)'),
+            'card_text_color' => self::css_color($project['gallery_card_text_color'] ?? 'inherit', 'inherit'),
+            'card_border_color' => self::css_color($project['gallery_card_border_color'] ?? 'rgba(255,255,255,0.16)', 'rgba(255,255,255,0.16)'),
+            'card_border_enabled' => !empty($project['gallery_card_border_enabled']) ? 1 : 0,
+            'card_radius' => max(0, min(60, absint($project['gallery_card_radius'] ?? 16))),
+            'card_padding' => self::choice($project['gallery_card_padding'] ?? 'none', array('none', 'small', 'medium', 'large'), 'none'),
+            'card_shadow' => self::choice($project['gallery_card_shadow'] ?? 'none', array('none', 'soft', 'strong'), 'none'),
+            'caption_position' => self::choice($project['gallery_caption_position'] ?? 'below', array('below', 'overlay'), 'below'),
+            'caption_color' => self::css_color($project['gallery_caption_color'] ?? 'inherit', 'inherit'),
+            'caption_background_color' => self::css_color($project['gallery_caption_background_color'] ?? 'rgba(0,0,0,0.58)', 'rgba(0,0,0,0.58)'),
+            'caption_text_size' => self::choice($project['gallery_caption_text_size'] ?? 'small', array('small', 'medium', 'large'), 'small'),
+            'caption_words' => max(3, min(40, absint($project['gallery_caption_words'] ?? 10))),
         );
 
         if (isset($overrides['limit']) && $overrides['limit'] !== '') {
@@ -156,6 +196,26 @@ final class PAI_Projects {
             'gallery_card_style' => $gallery_card,
             'gallery_download' => isset($_POST['gallery_download']) ? 1 : 0,
             'gallery_auto_refresh' => isset($_POST['gallery_auto_refresh']) ? 1 : 0,
+            'gallery_desktop_columns' => max(1, min(6, absint($_POST['gallery_desktop_columns'] ?? 3))),
+            'gallery_tablet_columns' => max(1, min(4, absint($_POST['gallery_tablet_columns'] ?? 2))),
+            'gallery_mobile_columns' => max(1, min(2, absint($_POST['gallery_mobile_columns'] ?? 1))),
+            'gallery_gap' => self::choice(sanitize_key(wp_unslash($_POST['gallery_gap'] ?? 'medium')), array('none', 'small', 'medium', 'large'), 'medium'),
+            'gallery_crop_mode' => self::choice(sanitize_key(wp_unslash($_POST['gallery_crop_mode'] ?? 'cover')), array('cover', 'contain'), 'cover'),
+            'gallery_max_width' => self::choice(sanitize_key(wp_unslash($_POST['gallery_max_width'] ?? 'full')), array('full', 'wide', 'contained'), 'full'),
+            'gallery_alignment' => self::choice(sanitize_key(wp_unslash($_POST['gallery_alignment'] ?? 'center')), array('left', 'center'), 'center'),
+            'gallery_background_color' => self::css_color(wp_unslash($_POST['gallery_background_color'] ?? 'transparent'), 'transparent'),
+            'gallery_card_background_color' => self::css_color(wp_unslash($_POST['gallery_card_background_color'] ?? 'rgba(255,255,255,0.06)'), 'rgba(255,255,255,0.06)'),
+            'gallery_card_text_color' => self::css_color(wp_unslash($_POST['gallery_card_text_color'] ?? 'inherit'), 'inherit'),
+            'gallery_card_border_color' => self::css_color(wp_unslash($_POST['gallery_card_border_color'] ?? 'rgba(255,255,255,0.16)'), 'rgba(255,255,255,0.16)'),
+            'gallery_card_border_enabled' => isset($_POST['gallery_card_border_enabled']) ? 1 : 0,
+            'gallery_card_radius' => max(0, min(60, absint($_POST['gallery_card_radius'] ?? 16))),
+            'gallery_card_padding' => self::choice(sanitize_key(wp_unslash($_POST['gallery_card_padding'] ?? 'none')), array('none', 'small', 'medium', 'large'), 'none'),
+            'gallery_card_shadow' => self::choice(sanitize_key(wp_unslash($_POST['gallery_card_shadow'] ?? 'none')), array('none', 'soft', 'strong'), 'none'),
+            'gallery_caption_position' => self::choice(sanitize_key(wp_unslash($_POST['gallery_caption_position'] ?? 'below')), array('below', 'overlay'), 'below'),
+            'gallery_caption_color' => self::css_color(wp_unslash($_POST['gallery_caption_color'] ?? 'inherit'), 'inherit'),
+            'gallery_caption_background_color' => self::css_color(wp_unslash($_POST['gallery_caption_background_color'] ?? 'rgba(0,0,0,0.58)'), 'rgba(0,0,0,0.58)'),
+            'gallery_caption_text_size' => self::choice(sanitize_key(wp_unslash($_POST['gallery_caption_text_size'] ?? 'small')), array('small', 'medium', 'large'), 'small'),
+            'gallery_caption_words' => max(3, min(40, absint($_POST['gallery_caption_words'] ?? 10))),
         );
 
         update_option(PAI_Constants::OPT_PROJECTS, $projects, false);
@@ -195,5 +255,33 @@ final class PAI_Projects {
 
     private static function choice($value, $allowed, $fallback) {
         return in_array($value, $allowed, true) ? $value : $fallback;
+    }
+
+    private static function css_color($value, $fallback) {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return $fallback;
+        }
+
+        if (in_array(strtolower($value), array('transparent', 'inherit', 'currentcolor'), true)) {
+            return strtolower($value);
+        }
+
+        if (preg_match('/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/', $value)) {
+            return $value;
+        }
+
+        if (preg_match('/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(\s*,\s*(0|1|0?\.\d+))?\s*\)$/', $value, $matches)) {
+            $r = min(255, max(0, (int) $matches[1]));
+            $g = min(255, max(0, (int) $matches[2]));
+            $b = min(255, max(0, (int) $matches[3]));
+            if (isset($matches[5]) && $matches[5] !== '') {
+                $a = min(1, max(0, (float) $matches[5]));
+                return 'rgba(' . $r . ',' . $g . ',' . $b . ',' . $a . ')';
+            }
+            return 'rgb(' . $r . ',' . $g . ',' . $b . ')';
+        }
+
+        return $fallback;
     }
 }
