@@ -1,157 +1,98 @@
 # Portfolio AI Generator
 
-**Version:** 1.4.0 candidate  
-**Status:** Test branch, not yet merged into `main`  
+**Version:** 1.6.2  
+**Status:** Production-readiness branch  
 **Plugin type:** WordPress image generation plugin for portfolio and project pages
 
-Portfolio AI Generator lets visitors generate AI images inside a controlled project style. Each project can have hidden master prompts, public style descriptions, generation limits, gallery moderation, provider settings, optional reference image guidance, and configurable gallery display settings.
+Portfolio AI Generator lets visitors generate AI images inside a controlled project style. Each project can have hidden master prompts, public style descriptions, generation limits, gallery moderation, provider settings, optional reference image guidance, frontend text controls, prompt relevance checks, and configurable gallery display settings.
 
-The plugin is designed for creative portfolios where consistency matters more than raw prompt freedom.
-
----
-
-## What v1.4.0 includes
-
-Version 1.4.0 builds on the stable v1.3.1 modular plugin.
-
-### Main changes
-
-- Removes the public frontend aspect-ratio selector.
-- Adds backend-only generation format setting: portrait, square, or landscape.
-- Uses faster showcase-friendly generation sizes.
-- Adds per-project gallery display settings.
-- Adds gallery image limit for latest N approved images.
-- Adds thumbnail shape controls: square, portrait, landscape, natural.
-- Adds thumbnail size controls: small, medium, large.
-- Adds caption display controls: hidden, prompt excerpt, date, prompt and date.
-- Adds card style controls: minimal, soft card, framed.
-- Adds optional gallery download links.
-- Adds AJAX gallery refresh endpoint.
-- Auto-refreshes matching frontend galleries after approved submission.
-- Adds backend Hide action to move images back to private.
-- Keeps Delete as soft delete by setting status to `deleted`.
-- Adds reference image thumbnail preview in project settings.
+The plugin is designed for creative portfolios where consistency, style control, and safe public interaction matter more than raw prompt freedom.
 
 ---
 
-## Folder structure
+## What v1.6.2 includes
 
-```text
-portfolio-ai-generator/
-├── portfolio-ai-generator.php
-├── README.md
-├── CHANGELOG.md
-├── includes/
-│   ├── class-pai-admin.php
-│   ├── class-pai-constants.php
-│   ├── class-pai-gallery.php
-│   ├── class-pai-generator.php
-│   ├── class-pai-logger.php
-│   ├── class-pai-media.php
-│   ├── class-pai-plugin.php
-│   ├── class-pai-projects.php
-│   └── providers/
-│       ├── class-pai-provider-custom-route.php
-│       └── class-pai-provider-gemini-direct.php
-└── assets/
-    ├── css/
-    │   └── pai-frontend.css
-    └── js/
-        └── pai-frontend.js
-```
+Version 1.6.2 builds on the v1.6.1 admin guidance release and begins the production-readiness pass.
+
+### Main features
+
+- Project-specific hidden master prompts
+- Negative prompts
+- Public style summaries
+- Custom frontend generator heading, description, placeholder, and button text
+- Backend-only generation format setting
+- OpenAI Direct provider
+- Gemini Direct provider
+- Custom Route provider
+- Per-project provider selection
+- Optional reference image attachment ID
+- Generated images saved to the WordPress Media Library
+- Gallery moderation workflow
+- Per-project gallery styling
+- Prompt relevance guard: Off, Basic, or Smart AI check
+- Expanded inline admin help descriptions
+- Debug logs with redaction
+- Provider test foundation
 
 ---
 
-## Installation guide
+## Important production notes
 
-### 1. Download or copy the plugin folder
+This plugin uses the site owner's own provider API keys. Image generation may incur costs billed directly by OpenAI, Google Gemini, or the configured custom provider.
 
-Use the full `portfolio-ai-generator` folder from this branch:
-
-```text
-feature/portfolio-ai-generator-v1.4.0-gallery-styling
-```
-
-Upload it to:
+Before public release, test:
 
 ```text
-wp-content/plugins/portfolio-ai-generator/
-```
-
-### 2. Check PHP syntax before activating
-
-From the server, run:
-
-```bash
-sudo find /home/portfolio.hayfam.co.uk/public_html/wp-content/plugins/portfolio-ai-generator -name '*.php' -print0 | xargs -0 -n1 sudo php -l
-```
-
-Every file should return:
-
-```text
-No syntax errors detected
-```
-
-### 3. Activate the plugin
-
-In WordPress admin:
-
-```text
-Plugins → Installed Plugins → Portfolio AI Generator → Activate
-```
-
-### 4. Open plugin settings
-
-```text
-Settings → Portfolio AI
+API keys
+provider settings
+relevance guard behaviour
+gallery moderation
+rate limits
+debug logs
+reference image behaviour
 ```
 
 ---
 
 ## Provider setup
 
-The plugin supports two provider modes.
+### OpenAI Direct
 
-### Gemini Direct
-
-Gemini Direct calls Google Gemini directly from the WordPress server.
+Use this for projects where style consistency with OpenAI/ChatGPT image output matters.
 
 Settings:
 
 ```text
-Provider: Gemini Direct
-Gemini API key: your Google AI Studio API key
-Gemini model: gemini-2.5-flash-image
-Gemini prompt character limit: 4000
-Debug logging: enabled while testing
+OpenAI API key
+OpenAI base URL
+OpenAI image model
+OpenAI quality
 ```
 
-The API key is stored server-side and is not exposed to browser JavaScript.
+### Gemini Direct
+
+Use this for Gemini image generation and reference-image testing.
+
+Settings:
+
+```text
+Gemini API key
+Gemini model
+Gemini prompt character limit
+```
 
 ### Custom Route
 
-Custom Route keeps support for LiteLLM/NVIDIA-style image routes.
+Use this for LiteLLM/NVIDIA-style image routes or other custom image endpoints.
 
-Example settings:
-
-```text
-Provider: Custom Route
-Base URL: https://litellm.example.com
-Endpoint path: /nvidia-flux
-Endpoint mode: Custom image route
-Auth mode: Raw Authorization value
-Custom route API key: your key
-```
-
-This provider sends:
+Settings:
 
 ```text
-prompt
-width
-height
-samples
-steps
-seed
+Base URL
+Endpoint path or full endpoint
+Endpoint mode
+Auth mode
+Custom route API key
 ```
 
 ---
@@ -168,7 +109,7 @@ Settings → Portfolio AI → Projects
 
 #### Project name
 
-The human-friendly name shown in admin and frontend headings.
+The human-friendly name shown in admin and used as a fallback frontend heading.
 
 #### Project slug
 
@@ -184,9 +125,27 @@ uk_grand_tour
 
 The private style system for the project. Visitors do not see this.
 
+Use this for:
+
+```text
+visual style
+composition rules
+colour palette
+lighting
+mood
+quality expectations
+consistency instructions
+```
+
 #### Negative prompt
 
-Optional. Use sparingly.
+Things the generator should avoid.
+
+Examples:
+
+```text
+blurry, distorted hands, extra text, watermark, low quality, messy typography
+```
 
 #### User prompt template
 
@@ -206,7 +165,30 @@ Supported placeholders:
 {{aspect_ratio}}
 ```
 
-`{{aspect_ratio}}` is kept for backwards compatibility and maps to the backend generation format.
+#### Frontend Text & Branding
+
+Controls the public generator wording:
+
+```text
+Generator heading
+Generator description
+Prompt placeholder
+Generate button text
+```
+
+#### Prompt Relevance & Safety
+
+Controls whether prompts are checked before generation.
+
+Modes:
+
+```text
+Off
+Basic local filter
+Smart AI check
+```
+
+Smart AI check uses the selected provider when supported. In v1.6.2 the smart relevance guard is being hardened to fail closed where appropriate.
 
 #### Generation format
 
@@ -215,125 +197,50 @@ Backend-only setting. Visitors do not see this.
 Options:
 
 ```text
-Portrait - 768 × 1024
-Square - 1024 × 1024
-Landscape - 1024 × 768
-```
-
-Default:
-
-```text
 Portrait
+Square
+Landscape
 ```
 
 #### Reference image attachment ID
 
-Optional.
-
-For Gemini Direct, this can be used as a visual reference image. Upload an image to the Media Library, open its details, find its attachment ID, and paste that ID here.
-
-v1.4.0 shows a thumbnail preview if the attachment ID points to a valid image.
+Optional WordPress Media Library attachment ID used as a visual reference where supported.
 
 ---
 
 ## Gallery display settings
 
-v1.4.0 adds per-project gallery controls.
-
-### Gallery image limit
-
-Controls how many approved images appear publicly.
-
-Example:
+Each project can control its gallery appearance:
 
 ```text
-12
+image limit
+thumbnail shape
+thumbnail size
+caption display
+card style
+download link
+auto-refresh
+desktop columns
+tablet columns
+mobile columns
+card colours
+caption styling
 ```
-
-The gallery displays the latest approved images first.
-
-### Thumbnail shape
-
-Options:
-
-```text
-Square
-Portrait
-Landscape
-Natural
-```
-
-### Thumbnail size
-
-Options:
-
-```text
-Small
-Medium
-Large
-```
-
-### Caption display
-
-Options:
-
-```text
-Hide captions
-Prompt excerpt
-Date
-Prompt and date
-```
-
-### Card style
-
-Options:
-
-```text
-Minimal
-Soft card
-Framed
-```
-
-### Download button
-
-Optional. Shows a download link on gallery cards.
-
-### Auto-refresh gallery
-
-When enabled, a matching gallery on the same page refreshes automatically after an image is submitted and approved.
-
-If gallery mode is `Submit to pending`, the image will not appear until approved by an admin.
 
 ---
 
 ## Shortcodes
 
-### Generator shortcode
+Generator:
 
 ```text
 [portfolio_ai_generator project="uk_grand_tour"]
 ```
 
-Displays the visitor prompt box and image generation UI.
-
-### Gallery shortcode
+Gallery:
 
 ```text
 [portfolio_ai_gallery project="uk_grand_tour"]
-```
-
-Displays approved generated images for that project using the project gallery settings.
-
-### Gallery shortcode overrides
-
-You can override some display settings per shortcode:
-
-```text
-[portfolio_ai_gallery project="uk_grand_tour" limit="8"]
-```
-
-```text
-[portfolio_ai_gallery project="uk_grand_tour" limit="8" caption="hide" shape="portrait" size="large" download="yes"]
 ```
 
 Only approved images appear in the public gallery.
@@ -357,40 +264,7 @@ Hide
 Delete
 ```
 
-Meaning:
-
-```text
-Approve = show in public gallery
-Reject = mark rejected
-Hide = set back to private
-Delete = soft delete, status becomes deleted
-```
-
-Delete does not permanently remove the Media Library file in v1.4.0.
-
----
-
-## Gallery behaviour
-
-Generated images are saved to the WordPress Media Library and recorded in the plugin database table.
-
-Default flow:
-
-```text
-Generate image
-→ image saved as private
-→ visitor clicks Submit to Gallery
-→ image becomes pending or approved depending on project settings
-→ approved images appear in gallery shortcode
-```
-
-If the gallery is not showing a generated image, check:
-
-1. The image was submitted to the gallery.
-2. The project gallery mode is not Off.
-3. The image status is Approved.
-4. The shortcode project slug matches the generator project slug.
-5. The gallery image limit is high enough to include it.
+Delete is currently a soft delete. It marks the image record as deleted and does not permanently remove the Media Library file.
 
 ---
 
@@ -402,15 +276,7 @@ Debug logs are available here:
 Settings → Portfolio AI → Debug Logs
 ```
 
-Logs intentionally avoid storing:
-
-```text
-API keys
-full hidden prompts
-base64 image data
-```
-
-Enable debug logging during setup, then disable it once the plugin is stable.
+Logs are intended to redact API keys, full hidden prompts, and base64 image data. Treat logs as admin-only operational diagnostics, not public-safe output.
 
 ---
 
@@ -424,63 +290,44 @@ API keys should only be entered in WordPress admin settings or stored using serv
 
 ---
 
-## Testing checklist for v1.4.0
+## Testing checklist for v1.6.2
 
-Before merging v1.4.0 into `main`, test the following on WordPress:
+Before treating v1.6.2 as production-ready, test:
 
-- Plugin activates without fatal errors.
-- API Settings page loads.
-- Existing project settings still appear.
-- Frontend generator no longer shows aspect-ratio dropdown.
-- Backend generation format dropdown saves correctly.
-- Gemini Direct generates an image.
-- Custom Route generates an image if still needed.
-- Generated image is saved to Media Library.
-- Generated image appears in History.
-- Submit to Gallery works.
-- Auto-approved image appears in gallery after auto-refresh.
-- Pending image does not appear until approved.
-- Gallery limit works.
-- Thumbnail shape settings work.
-- Thumbnail size settings work.
-- Caption settings work.
-- Download link setting works.
-- Hide action removes image from public gallery.
-- Delete action soft-deletes image.
-- Reference image preview appears in project settings.
-- Debug logs populate when enabled.
-- Debug logs do not expose API keys.
-
----
-
-## Rollback plan
-
-If v1.4.0 fails during testing, roll back to stable v1.3.1 on `main`.
-
-If the site breaks after installing v1.4.0, disable the plugin by renaming its folder:
-
-```bash
-sudo mv /home/portfolio.hayfam.co.uk/public_html/wp-content/plugins/portfolio-ai-generator \
-/home/portfolio.hayfam.co.uk/public_html/wp-content/plugins/portfolio-ai-generator-disabled
-```
-
-Then reinstall the stable v1.3.1 plugin folder from `main`.
+- Plugin activates without fatal errors
+- API Settings page loads
+- Provider keys save safely
+- Project settings save and reload correctly
+- Frontend text settings save and reload correctly
+- Relevance settings save and reload correctly
+- Smart relevance rejects out-of-scope prompts
+- Gemini Direct generates an image
+- OpenAI Direct generates an image
+- Custom Route works if configured
+- Reference image behaviour is clear and predictable
+- Failed provider calls do not incorrectly appear successful
+- Generated image is saved to Media Library
+- Generated image appears in History
+- Submit to Gallery works
+- Pending image does not appear until approved
+- Gallery styling works on desktop and mobile
+- Debug logs do not expose provider credentials
 
 ---
 
 ## Known limitations
 
-- Lightbox is not included yet.
-- Masonry layout is not included yet.
-- Album/taxonomy support is not included yet.
-- Permanent Media Library deletion is not included yet.
-- Provider-specific cost tracking is not included yet.
-- Public release packaging is not complete yet.
+- Public release packaging is not complete yet
+- A formal WordPress.org `readme.txt` is still required
+- Provider connection tests are still being hardened
+- Captcha support is not included yet
+- Provider-specific cost tracking is not included yet
+- Permanent Media Library deletion is not included yet
 
 ---
 
 ## Current recommendation
 
-Treat v1.4.0 as a test branch until it has been installed and tested on the live WordPress site.
+Treat v1.6.2 as a production-readiness branch, not a final public release.
 
-Do not merge v1.4.0 into `main` until the testing checklist passes.
+Do not submit to the WordPress plugin directory until the remaining audit issues are resolved and a security pass has been completed.
