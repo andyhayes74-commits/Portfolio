@@ -24,6 +24,10 @@ final class PAI_Provider_OpenAI_Direct {
         }
 
         $reference = $this->reference_image_file($project);
+        if (is_wp_error($reference)) {
+            return $reference;
+        }
+
         $has_reference = !empty($reference['path']);
 
         PAI_Logger::log('info', 'Calling OpenAI image endpoint', array(
@@ -135,7 +139,7 @@ final class PAI_Provider_OpenAI_Direct {
                 'provider' => 'openai_direct',
                 'attachment_id' => $attachment_id,
             ));
-            return array();
+            return new WP_Error('pai_openai_reference_missing', 'Configured OpenAI reference image could not be read.');
         }
 
         $mime = get_post_mime_type($attachment_id);
@@ -150,7 +154,7 @@ final class PAI_Provider_OpenAI_Direct {
                 'attachment_id' => $attachment_id,
                 'mime' => $mime,
             ));
-            return array();
+            return new WP_Error('pai_openai_reference_type', 'Configured OpenAI reference image must be PNG, JPEG, or WebP.');
         }
 
         return array(
