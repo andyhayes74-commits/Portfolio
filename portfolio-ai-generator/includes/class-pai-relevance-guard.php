@@ -139,7 +139,8 @@ final class PAI_Relevance_Guard {
     }
 
     private static function gemini_text_check($prompt) {
-        $api_key = trim((string) get_option(PAI_Constants::OPT_GEMINI_API_KEY, ''));
+        $api_key = defined('PORTFOLIO_AI_GEMINI_API_KEY') ? PORTFOLIO_AI_GEMINI_API_KEY : get_option(PAI_Constants::OPT_GEMINI_API_KEY, '');
+        $api_key = trim((string) $api_key);
         if ($api_key === '') {
             return new WP_Error('missing_gemini_key', 'Gemini API key missing.');
         }
@@ -172,12 +173,17 @@ final class PAI_Relevance_Guard {
     }
 
     private static function openai_text_check($prompt) {
-        $api_key = trim((string) get_option(PAI_Constants::OPT_OPENAI_API_KEY, ''));
+        $api_key = defined('PORTFOLIO_AI_OPENAI_API_KEY') ? PORTFOLIO_AI_OPENAI_API_KEY : get_option(PAI_Constants::OPT_OPENAI_API_KEY, '');
+        $api_key = trim((string) $api_key);
         if ($api_key === '') {
             return new WP_Error('missing_openai_key', 'OpenAI API key missing.');
         }
 
-        $base = untrailingslashit((string) get_option(PAI_Constants::OPT_OPENAI_BASE_URL, 'https://api.openai.com/v1'));
+        $base = defined('PORTFOLIO_AI_OPENAI_BASE_URL') ? PORTFOLIO_AI_OPENAI_BASE_URL : get_option(PAI_Constants::OPT_OPENAI_BASE_URL, 'https://api.openai.com/v1');
+        $base = untrailingslashit(trim((string) $base));
+        if ($base === '') {
+            $base = 'https://api.openai.com/v1';
+        }
 
         $response = wp_remote_post(
             $base . '/chat/completions',
