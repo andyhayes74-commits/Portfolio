@@ -5,7 +5,8 @@ if (!defined('ABSPATH')) {
 
 final class PAI_Provider_Gemini_Direct {
     public function generate($project, $prompt, $ratio) {
-        $api_key = trim((string) get_option(PAI_Constants::OPT_GEMINI_API_KEY, ''));
+        $api_key = defined('PORTFOLIO_AI_GEMINI_API_KEY') ? PORTFOLIO_AI_GEMINI_API_KEY : get_option(PAI_Constants::OPT_GEMINI_API_KEY, '');
+        $api_key = trim((string) $api_key);
         $model = trim((string) get_option(PAI_Constants::OPT_GEMINI_MODEL, 'gemini-2.5-flash-image'));
         $limit = (int) get_option(PAI_Constants::OPT_GEMINI_PROMPT_LIMIT, 4000);
         $limit = $limit > 0 ? $limit : 4000;

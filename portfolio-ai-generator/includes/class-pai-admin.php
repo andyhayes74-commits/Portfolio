@@ -73,7 +73,7 @@ final class PAI_Admin {
 
             <h2>OpenAI Direct Settings</h2>
             <table class="form-table"><tbody>
-                <tr><th>OpenAI API key</th><td><input class="regular-text" type="password" name="openai_api_key" value="<?php echo esc_attr(get_option(PAI_Constants::OPT_OPENAI_API_KEY, '')); ?>" <?php disabled(defined('PORTFOLIO_AI_OPENAI_API_KEY')); ?> autocomplete="off"><p class="description">Stored server-side only. Never exposed to browser JavaScript.</p></td></tr>
+                <tr><th>OpenAI API key</th><td><input class="regular-text" type="password" name="openai_api_key" value="" placeholder="Configured / leave blank to keep existing" <?php disabled(defined('PORTFOLIO_AI_OPENAI_API_KEY')); ?> autocomplete="off"><p class="description">Stored server-side only. Leave blank to keep the existing key. Never exposed to browser JavaScript.</p></td></tr>
                 <tr><th>OpenAI base URL</th><td><input class="regular-text" type="url" name="openai_base_url" value="<?php echo esc_attr($openai_base); ?>" <?php disabled(defined('PORTFOLIO_AI_OPENAI_BASE_URL')); ?>><p class="description">Default: https://api.openai.com/v1</p></td></tr>
                 <tr><th>OpenAI image model</th><td><select name="openai_model">
                     <?php foreach (array('gpt-image-1-mini' => 'gpt-image-1-mini - cheaper', 'chatgpt-image-latest' => 'chatgpt-image-latest - portfolio style', 'gpt-image-1.5' => 'gpt-image-1.5', 'gpt-image-1' => 'gpt-image-1') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($openai_model, $value, false) . '>' . esc_html($label) . '</option>'; ?>
@@ -85,7 +85,7 @@ final class PAI_Admin {
 
             <h2>Gemini Direct Settings</h2>
             <table class="form-table"><tbody>
-                <tr><th>Gemini API key</th><td><input class="regular-text" type="password" name="gemini_api_key" value="<?php echo esc_attr(get_option(PAI_Constants::OPT_GEMINI_API_KEY, '')); ?>" autocomplete="off"><p class="description">Stored server-side only. Never exposed to browser JavaScript.</p></td></tr>
+                <tr><th>Gemini API key</th><td><input class="regular-text" type="password" name="gemini_api_key" value="" placeholder="Configured / leave blank to keep existing" <?php disabled(defined('PORTFOLIO_AI_GEMINI_API_KEY')); ?> autocomplete="off"><p class="description">Stored server-side only. Leave blank to keep the existing key. Never exposed to browser JavaScript.</p></td></tr>
                 <tr><th>Gemini model</th><td><input class="regular-text" type="text" name="gemini_model" value="<?php echo esc_attr($gemini_model); ?>"><p class="description">Default: gemini-2.5-flash-image</p></td></tr>
                 <tr><th>Gemini prompt character limit</th><td><input type="number" min="200" max="12000" name="gemini_prompt_limit" value="<?php echo esc_attr((string) $gemini_limit); ?>"><p class="description">Long hidden prompts can increase cost and failure rate. Default: 4000 characters.</p></td></tr>
             </tbody></table>
@@ -100,7 +100,7 @@ final class PAI_Admin {
                 <tr><th>Auth mode</th><td><select name="auth_mode">
                     <?php foreach (array('auto' => 'Auto detect', 'bearer' => 'Bearer token', 'raw' => 'Raw Authorization value', 'none' => 'No Authorization header') as $value => $label) echo '<option value="' . esc_attr($value) . '" ' . selected($auth_mode, $value, false) . '>' . esc_html($label) . '</option>'; ?>
                 </select><p class="description">Use Raw if your working curl uses Authorization: sk-... instead of Authorization: Bearer sk-...</p></td></tr>
-                <tr><th>Custom route API key</th><td><input class="regular-text" type="password" name="api_key" value="<?php echo esc_attr(get_option(PAI_Constants::OPT_API_KEY, '')); ?>" <?php disabled(defined('PORTFOLIO_AI_LITELLM_API_KEY')); ?> autocomplete="off"><p class="description">Stored server-side only. Never shown to visitors.</p></td></tr>
+                <tr><th>Custom route API key</th><td><input class="regular-text" type="password" name="api_key" value="" placeholder="Configured / leave blank to keep existing" <?php disabled(defined('PORTFOLIO_AI_LITELLM_API_KEY')); ?> autocomplete="off"><p class="description">Stored server-side only. Leave blank to keep the existing key. Never shown to visitors.</p></td></tr>
             </tbody></table>
             <?php submit_button('Save settings'); ?>
         </form>
@@ -243,7 +243,7 @@ final class PAI_Admin {
         $provider = sanitize_key(wp_unslash($_POST['provider'] ?? 'custom_route'));
         update_option(PAI_Constants::OPT_PROVIDER, in_array($provider, array('custom_route', 'gemini_direct', 'openai_direct'), true) ? $provider : 'custom_route', false);
 
-        update_option(PAI_Constants::OPT_OPENAI_API_KEY, sanitize_text_field(wp_unslash($_POST['openai_api_key'] ?? '')), false);
+        $this->update_secret_if_present(PAI_Constants::OPT_OPENAI_API_KEY, 'openai_api_key', defined('PORTFOLIO_AI_OPENAI_API_KEY'));
         if (!defined('PORTFOLIO_AI_OPENAI_BASE_URL')) update_option(PAI_Constants::OPT_OPENAI_BASE_URL, esc_url_raw(wp_unslash($_POST['openai_base_url'] ?? 'https://api.openai.com/v1')), false);
         $openai_model = sanitize_text_field(wp_unslash($_POST['openai_model'] ?? 'gpt-image-1-mini'));
         update_option(PAI_Constants::OPT_OPENAI_MODEL, in_array($openai_model, array('gpt-image-1-mini', 'chatgpt-image-latest', 'gpt-image-1.5', 'gpt-image-1'), true) ? $openai_model : 'gpt-image-1-mini', false);
@@ -251,7 +251,7 @@ final class PAI_Admin {
         update_option(PAI_Constants::OPT_OPENAI_QUALITY, in_array($openai_quality, array('low', 'medium', 'high', 'auto'), true) ? $openai_quality : 'medium', false);
 
         if (!defined('PORTFOLIO_AI_LITELLM_BASE_URL')) update_option(PAI_Constants::OPT_BASE_URL, esc_url_raw(wp_unslash($_POST['base_url'] ?? '')), false);
-        if (!defined('PORTFOLIO_AI_LITELLM_API_KEY')) update_option(PAI_Constants::OPT_API_KEY, sanitize_text_field(wp_unslash($_POST['api_key'] ?? '')), false);
+        $this->update_secret_if_present(PAI_Constants::OPT_API_KEY, 'api_key', defined('PORTFOLIO_AI_LITELLM_API_KEY'));
 
         update_option(PAI_Constants::OPT_ENDPOINT_PATH, sanitize_text_field(wp_unslash($_POST['endpoint_path'] ?? '/v1/images/generations')), false);
 
@@ -261,7 +261,7 @@ final class PAI_Admin {
         $auth_mode = sanitize_key(wp_unslash($_POST['auth_mode'] ?? 'auto'));
         update_option(PAI_Constants::OPT_AUTH_MODE, in_array($auth_mode, array('auto', 'bearer', 'raw', 'none'), true) ? $auth_mode : 'auto', false);
 
-        update_option(PAI_Constants::OPT_GEMINI_API_KEY, sanitize_text_field(wp_unslash($_POST['gemini_api_key'] ?? '')), false);
+        $this->update_secret_if_present(PAI_Constants::OPT_GEMINI_API_KEY, 'gemini_api_key', defined('PORTFOLIO_AI_GEMINI_API_KEY'));
         update_option(PAI_Constants::OPT_GEMINI_MODEL, sanitize_text_field(wp_unslash($_POST['gemini_model'] ?? 'gemini-2.5-flash-image')), false);
         update_option(PAI_Constants::OPT_GEMINI_PROMPT_LIMIT, max(200, min(12000, absint($_POST['gemini_prompt_limit'] ?? 4000))), false);
 
@@ -295,6 +295,20 @@ final class PAI_Admin {
         PAI_Logger::clear();
         wp_safe_redirect(admin_url('options-general.php?page=portfolio-ai-generator&tab=logs&updated=1'));
         exit;
+    }
+
+
+    private function update_secret_if_present($option, $post_key, $constant_defined) {
+        if ($constant_defined || !isset($_POST[$post_key])) {
+            return;
+        }
+
+        $value = trim(sanitize_text_field(wp_unslash($_POST[$post_key])));
+        if ($value === '') {
+            return;
+        }
+
+        update_option($option, $value, false);
     }
 
     private function reference_preview($attachment_id) {

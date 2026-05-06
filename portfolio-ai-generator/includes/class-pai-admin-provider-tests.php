@@ -26,7 +26,7 @@ final class PAI_Admin_Provider_Tests {
         $providers = array(
             'openai_direct' => 'Test OpenAI connection',
             'gemini_direct' => 'Test Gemini connection',
-            'custom_route' => 'Test Custom Route connection',
+            'custom_route' => 'Test Custom Route endpoint',
         );
         ?>
         <script>
@@ -48,7 +48,7 @@ final class PAI_Admin_Provider_Tests {
                 }
 
                 var p = document.createElement('p');
-                p.innerHTML = '<a class="button button-secondary" href="' + item.url + '">' + item.label + '</a> <span class="description">Runs a small server-side API check using the saved settings.</span>';
+                p.innerHTML = '<a class="button button-secondary" href="' + item.url + '">' + item.label + '</a> <span class="description">Runs a small server-side check using the saved settings.</span>';
                 heading.insertAdjacentElement('afterend', p);
                 heading.dataset.paiProviderTestAdded = '1';
             });
@@ -139,20 +139,21 @@ final class PAI_Admin_Provider_Tests {
     private static function test_custom_route() {
         $base = defined('PORTFOLIO_AI_LITELLM_BASE_URL') ? PORTFOLIO_AI_LITELLM_BASE_URL : get_option(PAI_Constants::OPT_BASE_URL, '');
         $key = defined('PORTFOLIO_AI_LITELLM_API_KEY') ? PORTFOLIO_AI_LITELLM_API_KEY : get_option(PAI_Constants::OPT_API_KEY, '');
-        $base = untrailingslashit(trim((string) $base));
+        $endpoint = trim((string) get_option(PAI_Constants::OPT_ENDPOINT_PATH, '/v1/images/generations'));
+        $url = self::custom_route_url($base, $endpoint);
         $key = trim((string) $key);
 
-        if ($base === '') {
-            return new WP_Error('missing_custom_route_base', 'Custom Route base URL is missing.');
+        if ($url === '') {
+            return new WP_Error('missing_custom_route_endpoint', 'Custom Route endpoint is missing.');
         }
 
         $headers = array();
-        if ($key !== '') {
-            $auth_mode = get_option(PAI_Constants::OPT_AUTH_MODE, 'auto');
-            $headers['Authorization'] = $auth_mode === 'raw' ? $key : 'Bearer ' . $key;
+        $auth = self::custom_route_auth_header($key, $endpoint);
+        if ($auth !== '') {
+            $headers['Authorization'] = $auth;
         }
 
-        $response = wp_remote_get($base, array(
+        $response = wp_remote_get($url, array(
             'timeout' => 20,
             'headers' => $headers,
         ));
@@ -162,11 +163,48 @@ final class PAI_Admin_Provider_Tests {
         }
 
         $code = (int) wp_remote_retrieve_response_code($response);
-        if ($code >= 200 && $code < 500) {
-            return 'Custom Route host responded with HTTP ' . $code . '. Verify generation separately because custom image endpoints vary.';
+        if ($code === 401 || $code === 403) {
+            return new WP_Error('custom_route_auth_failed', 'Custom Route endpoint rejected the configured authentication with HTTP ' . $code . '.');
         }
 
-        return new WP_Error('custom_route_unreachable', 'Custom Route host returned HTTP ' . $code . '.');
+        if ($code === 404 || $code >= 500 || $code < 200) {
+            return new WP_Error('custom_route_unreachable', 'Custom Route endpoint returned HTTP ' . $code . '.');
+        }
+
+        return 'Custom Route endpoint responded with HTTP ' . $code . '. This verifies endpoint reachability and auth mode; run a generation to verify provider-specific image payload support.';
+    }
+
+    private static function custom_route_url($base, $endpoint) {
+        $endpoint = trim((string) $endpoint);
+        if (preg_match('#^https?://#i', $endpoint)) {
+            return esc_url_raw($endpoint);
+        }
+
+        $base = untrailingslashit(trim((string) $base));
+        if ($base === '') {
+            return '';
+        }
+
+        return esc_url_raw($base . '/' . ltrim($endpoint ?: '/v1/images/generations', '/'));
+    }
+
+    private static function custom_route_auth_header($key, $endpoint) {
+        $key = trim((string) $key);
+        $mode = self::custom_route_auth_mode($endpoint);
+        if ($mode === 'none' || $key === '') {
+            return '';
+        }
+
+        return $mode === 'raw' ? $key : 'Bearer ' . $key;
+    }
+
+    private static function custom_route_auth_mode($endpoint) {
+        $mode = get_option(PAI_Constants::OPT_AUTH_MODE, 'auto');
+        if ($mode === 'auto') {
+            return stripos((string) $endpoint, 'nvidia-flux') !== false ? 'raw' : 'bearer';
+        }
+
+        return in_array($mode, array('bearer', 'raw', 'none'), true) ? $mode : 'bearer';
     }
 
     private static function http_result($response, $success_message) {

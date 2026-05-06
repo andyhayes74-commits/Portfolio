@@ -129,7 +129,8 @@ final class PAI_Generator {
 
         $format = $this->generation_format($project);
 
-        if (!$this->rate_ok($slug, (int) $project['daily_limit'])) {
+        $daily_limit = (int) $project['daily_limit'];
+        if (!$this->rate_ok($slug, $daily_limit)) {
             wp_send_json_error(array('message' => 'Daily generation limit reached.'), 429);
         }
 
@@ -137,6 +138,16 @@ final class PAI_Generator {
         $model_name = $this->model_name_for_provider($provider_name, $project);
         $full_prompt = PAI_Projects::compile_prompt($project, $user_prompt, $format);
         $image_id = $this->insert_image_row($slug, $user_prompt, $full_prompt, $format, $model_name);
+
+        if (is_wp_error($image_id)) {
+            PAI_Logger::log('error', 'Could not create generation record', array(
+                'project' => $slug,
+                'provider' => $provider_name,
+                'error' => $image_id->get_error_message(),
+            ));
+
+            wp_send_json_error(array('message' => 'Could not start generation. Please try again later.'), 500);
+        }
 
         PAI_Logger::log('info', 'Generation started', array(
             'id' => $image_id,
@@ -177,7 +188,7 @@ final class PAI_Generator {
 
         global $wpdb;
 
-        $wpdb->update(
+        $updated = $wpdb->update(
             PAI_Constants::table(),
             array(
                 'image_url' => $saved['url'],
@@ -189,6 +200,17 @@ final class PAI_Generator {
             array('%s', '%s', '%d', '%s'),
             array('%d')
         );
+
+        if ($updated === false) {
+            PAI_Logger::log('error', 'Image record update failed', array(
+                'id' => $image_id,
+                'provider' => $provider_name,
+            ));
+
+            wp_send_json_error(array('message' => 'Image was generated but could not be saved to history. Please try again later.'), 500);
+        }
+
+        $this->increment_rate($slug, $daily_limit);
 
         PAI_Logger::log('info', 'Generation completed', array(
             'id' => $image_id,
@@ -237,7 +259,7 @@ final class PAI_Generator {
         global $wpdb;
         $now = current_time('mysql');
 
-        $wpdb->insert(
+        $inserted = $wpdb->insert(
             PAI_Constants::table(),
             array(
                 'project_slug' => $slug,
@@ -253,7 +275,12 @@ final class PAI_Generator {
             array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
         );
 
-        return (int) $wpdb->insert_id;
+        $id = (int) $wpdb->insert_id;
+        if ($inserted === false || $id < 1) {
+            return new WP_Error('pai_db_insert_failed', 'Could not create generation history record.');
+        }
+
+        return $id;
     }
 
     private function mark_failed($id, $message) {
@@ -274,22 +301,28 @@ final class PAI_Generator {
 
     private function rate_ok($slug, $limit) {
         $limit = max(1, (int) $limit);
-        $key = 'pai_rate_' . $this->ip_hash($slug);
-        $count = (int) get_transient($key);
+        return (int) get_transient($this->rate_key($slug)) < $limit;
+    }
 
-        if ($count >= $limit) {
-            return false;
-        }
+    private function increment_rate($slug, $limit) {
+        $limit = max(1, (int) $limit);
+        $key = $this->rate_key($slug);
+        $count = min((int) get_transient($key) + 1, $limit);
+        set_transient($key, $count, $this->rate_expires());
+    }
 
+    private function rate_key($slug) {
+        return 'pai_rate_' . $this->ip_hash($slug);
+    }
+
+    private function rate_expires() {
         $expires = strtotime('tomorrow 00:00:00 UTC') - time();
 
         if ($expires < HOUR_IN_SECONDS || $expires > DAY_IN_SECONDS) {
-            $expires = DAY_IN_SECONDS;
+            return DAY_IN_SECONDS;
         }
 
-        set_transient($key, $count + 1, $expires);
-
-        return true;
+        return $expires;
     }
 
     private function ip_hash($slug) {

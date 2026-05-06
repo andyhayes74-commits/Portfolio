@@ -5,30 +5,7 @@ if (!defined('ABSPATH')) {
 
 final class PAI_Admin_Hardening {
     public static function init() {
-        add_action('admin_init', array(__CLASS__, 'scrub_secret_fields_buffer'), 0);
         add_action('admin_post_pai_save_settings', array(__CLASS__, 'save_settings_safely'), 1);
-    }
-
-    public static function scrub_secret_fields_buffer() {
-        if (!is_admin() || !current_user_can('manage_options')) {
-            return;
-        }
-
-        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
-        if ($page !== 'portfolio-ai-generator') {
-            return;
-        }
-
-        ob_start(array(__CLASS__, 'scrub_password_values'));
-    }
-
-    public static function scrub_password_values($html) {
-        foreach (array('openai_api_key', 'gemini_api_key', 'api_key') as $name) {
-            $pattern = '/(<input\b(?=[^>]*\btype=["\']password["\'])(?=[^>]*\bname=["\']' . preg_quote($name, '/') . '["\'])([^>]*?)\bvalue=["\'][^"\']*["\']([^>]*>)/i';
-            $html = preg_replace($pattern, '$1$2value="" placeholder="Configured / leave blank to keep existing"$3', $html);
-        }
-
-        return $html;
     }
 
     public static function save_settings_safely() {
