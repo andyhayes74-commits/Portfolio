@@ -1,12 +1,12 @@
 # Portfolio AI Generator
 
-**Current stable version:** v1.6.1  
+**Current stable version:** v1.6.2  
 **Branch:** `main`  
 **Project:** WordPress plugin for controlled AI image generation on portfolio project pages
 
 Portfolio AI Generator lets visitors generate AI images inside a controlled project style. It is designed for creative portfolios, AI art projects, campaign demos, case studies, and interactive project pages where the site owner wants consistent outputs rather than completely open-ended prompting.
 
-The plugin supports hidden project prompts, public style summaries, multi-provider image generation, WordPress Media Library saving, moderation, configurable galleries, reference images, prompt relevance checks, frontend branding controls, and safe debug logging.
+The plugin supports hidden project prompts, public style summaries, multi-provider image generation, WordPress Media Library saving, moderation, configurable galleries, reference images, prompt relevance checks, frontend branding controls, provider testing foundations, expanded backend guidance, and safe debug logging.
 
 ---
 
@@ -15,16 +15,17 @@ The plugin supports hidden project prompts, public style summaries, multi-provid
 `main` now contains the latest tested stable version:
 
 ```text
-v1.6.1
+v1.6.2
 ```
 
-v1.6.1 includes:
+v1.6.2 includes:
 
 ```text
 v1.4.1 multi-provider generation
 v1.5 gallery customisation
 v1.6 relevance guard and frontend branding
 v1.6.1 expanded backend admin guidance
+v1.6.2 production-readiness foundations
 ```
 
 Continue new work from `main`.
@@ -74,7 +75,37 @@ Use the plugin README for setup, provider configuration, shortcode usage, refere
 - Debug logs with redaction
 - Daily generation limits
 - Expanded backend field descriptions
+- Provider connection testing foundations
+- Safer production-oriented defaults
 - Modular PHP structure for safer maintenance
+
+---
+
+## Production readiness direction
+
+v1.6.2 begins the shift from:
+
+```text
+developer prototype
+```
+
+toward:
+
+```text
+public-facing production plugin
+```
+
+The current focus is:
+
+```text
+stability
+clarity
+safe defaults
+better onboarding
+support reduction
+```
+
+rather than rapid feature expansion.
 
 ---
 
@@ -111,6 +142,22 @@ Use for Gemini image generation and reference-image testing. Gemini Direct can s
 ### Custom Route
 
 Use for LiteLLM/NVIDIA-style routes or other OpenAI-compatible/custom endpoints.
+
+---
+
+## Provider connection testing
+
+v1.6.2 introduces the foundation for provider testing tools.
+
+Planned supported checks:
+
+```text
+OpenAI connection test
+Gemini connection test
+Custom Route connection test
+```
+
+These tools are designed to reduce setup confusion and help users diagnose invalid API credentials or endpoint issues.
 
 ---
 
@@ -210,6 +257,7 @@ This allows different portfolio projects to have different gallery styles while 
 - Cleaner edit flow
 - Expanded inline help text for important settings
 - Guidance for prompts, providers, relevance checks, and galleries
+- Improved onboarding descriptions for non-technical users
 
 ---
 
@@ -234,6 +282,16 @@ Gallery with overrides:
 ```
 
 Only approved images appear in the public gallery.
+
+---
+
+## v1.6.2 highlights
+
+- Added production-readiness groundwork.
+- Added provider connection testing foundation.
+- Improved onboarding direction.
+- Improved production-oriented admin wording.
+- Improved stability-focused roadmap direction.
 
 ---
 
@@ -285,6 +343,7 @@ Before treating a fresh install as stable, test:
 - OpenAI Direct reference-image generation still works
 - Gemini Direct still works
 - Custom Route still works if needed
+- provider test notices display correctly
 - debug logs do not expose provider credentials
 
 Keep `main` as the latest stable tested version.
