@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class PAI_Constants {
-    const VERSION = '1.5.0';
+    const VERSION = '1.6.0';
 
     const OPT_PROJECTS = 'pai_projects';
     const OPT_PROVIDER = 'pai_provider';

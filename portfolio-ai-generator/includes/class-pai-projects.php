@@ -33,6 +33,14 @@ final class PAI_Projects {
             'generation_format' => 'portrait',
             'aspect_ratios' => array('portrait'),
             'daily_limit' => 20,
+            'frontend_heading' => '',
+            'frontend_description' => '',
+            'frontend_prompt_placeholder' => '',
+            'frontend_generate_button' => '',
+            'relevance_guard_mode' => 'off',
+            'relevance_allowed_intent' => '',
+            'relevance_rejection_message' => 'That prompt does not fit this project. Try a different idea that matches the project theme.',
+            'relevance_basic_blocklist' => 'logo, website, app ui, code, essay, cv, weapon, gun, battle',
             'gallery_mode' => 'pending',
             'gallery_limit' => 12,
             'gallery_thumb_shape' => 'square',
@@ -173,6 +181,7 @@ final class PAI_Projects {
         $gallery_size = self::choice(sanitize_key(wp_unslash($_POST['gallery_thumb_size'] ?? 'medium')), array('small', 'medium', 'large'), 'medium');
         $gallery_caption = self::choice(sanitize_key(wp_unslash($_POST['gallery_caption'] ?? 'prompt')), array('hide', 'prompt', 'date', 'prompt_date'), 'prompt');
         $gallery_card = self::choice(sanitize_key(wp_unslash($_POST['gallery_card_style'] ?? 'soft')), array('minimal', 'soft', 'framed'), 'soft');
+        $relevance_mode = self::choice(sanitize_key(wp_unslash($_POST['relevance_guard_mode'] ?? 'off')), array('off', 'basic', 'smart'), 'off');
 
         $projects[$slug] = array(
             'name' => sanitize_text_field(wp_unslash($_POST['name'] ?? '')),
@@ -188,6 +197,14 @@ final class PAI_Projects {
             'generation_format' => $generation_format,
             'aspect_ratios' => array($generation_format),
             'daily_limit' => max(1, min(1000, absint($_POST['daily_limit'] ?? 20))),
+            'frontend_heading' => sanitize_text_field(wp_unslash($_POST['frontend_heading'] ?? '')),
+            'frontend_description' => sanitize_textarea_field(wp_unslash($_POST['frontend_description'] ?? '')),
+            'frontend_prompt_placeholder' => sanitize_text_field(wp_unslash($_POST['frontend_prompt_placeholder'] ?? '')),
+            'frontend_generate_button' => sanitize_text_field(wp_unslash($_POST['frontend_generate_button'] ?? '')),
+            'relevance_guard_mode' => $relevance_mode,
+            'relevance_allowed_intent' => sanitize_textarea_field(wp_unslash($_POST['relevance_allowed_intent'] ?? '')),
+            'relevance_rejection_message' => sanitize_text_field(wp_unslash($_POST['relevance_rejection_message'] ?? '')),
+            'relevance_basic_blocklist' => sanitize_textarea_field(wp_unslash($_POST['relevance_basic_blocklist'] ?? '')),
             'gallery_mode' => $gallery_mode,
             'gallery_limit' => max(1, min(100, absint($_POST['gallery_limit'] ?? 12))),
             'gallery_thumb_shape' => $gallery_shape,
