@@ -72,15 +72,21 @@ final class PAI_Gallery {
         }
 
         $id = absint($_POST['id'] ?? 0);
+        $gallery_token = sanitize_text_field(wp_unslash($_POST['gallery_token'] ?? ''));
+
+        if (!$id || $gallery_token === '') {
+            wp_send_json_error(array('message' => 'Could not verify this gallery submission.'), 400);
+        }
+
         $status = $project['gallery_mode'] === 'approved' ? 'approved' : 'pending';
 
         global $wpdb;
         $ok = $wpdb->update(
             PAI_Constants::table(),
             array('status' => $status, 'updated_at' => current_time('mysql')),
-            array('id' => $id, 'project_slug' => $slug, 'status' => 'private'),
+            array('id' => $id, 'project_slug' => $slug, 'status' => 'private', 'gallery_token' => $gallery_token),
             array('%s', '%s'),
-            array('%d', '%s', '%s')
+            array('%d', '%s', '%s', '%s')
         );
 
         if (!$ok) {

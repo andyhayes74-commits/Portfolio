@@ -18,6 +18,16 @@ final class PAI_Plugin {
     }
 
     public static function activate() {
+        self::install_schema();
+    }
+
+    private static function maybe_upgrade_schema() {
+        if (get_option(PAI_Constants::OPT_SCHEMA_VERSION) !== PAI_Constants::SCHEMA_VERSION) {
+            self::install_schema();
+        }
+    }
+
+    private static function install_schema() {
         global $wpdb;
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
@@ -36,6 +46,7 @@ final class PAI_Plugin {
             aspect_ratio VARCHAR(24) NOT NULL DEFAULT 'square',
             model_name VARCHAR(190) NULL,
             ip_hash VARCHAR(128) NULL,
+            gallery_token VARCHAR(128) NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             error_message TEXT NULL,
@@ -43,6 +54,8 @@ final class PAI_Plugin {
             KEY project_status (project_slug,status),
             KEY created_at (created_at)
         ) $charset;");
+
+        update_option(PAI_Constants::OPT_SCHEMA_VERSION, PAI_Constants::SCHEMA_VERSION, false);
     }
 
     private function __construct() {
@@ -52,6 +65,7 @@ final class PAI_Plugin {
     }
 
     private function register() {
+        self::maybe_upgrade_schema();
         $this->admin->register();
         $this->generator->register();
         $this->gallery->register();

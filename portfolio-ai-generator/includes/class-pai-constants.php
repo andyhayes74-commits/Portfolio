@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
 
 final class PAI_Constants {
     const VERSION = '1.6.2';
+    const SCHEMA_VERSION = '1.6.3';
 
     const OPT_PROJECTS = 'pai_projects';
     const OPT_PROVIDER = 'pai_provider';
@@ -27,6 +28,7 @@ final class PAI_Constants {
     const OPT_DISABLED = 'pai_emergency_disabled';
     const OPT_DEBUG = 'pai_debug_enabled';
     const OPT_LOGS = 'pai_debug_logs';
+    const OPT_SCHEMA_VERSION = 'pai_schema_version';
 
     public static function table() {
         global $wpdb;

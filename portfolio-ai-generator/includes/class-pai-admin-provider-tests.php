@@ -167,7 +167,11 @@ final class PAI_Admin_Provider_Tests {
             return new WP_Error('custom_route_auth_failed', 'Custom Route endpoint rejected the configured authentication with HTTP ' . $code . '.');
         }
 
-        if ($code === 404 || $code >= 500 || $code < 200) {
+        if ($code === 404 || $code === 405 || $code >= 500 || $code < 200) {
+            return new WP_Error('custom_route_unreachable', 'Custom Route endpoint returned HTTP ' . $code . '. Run a generation to test this POST-only image endpoint.');
+        }
+
+        if ($code >= 400) {
             return new WP_Error('custom_route_unreachable', 'Custom Route endpoint returned HTTP ' . $code . '.');
         }
 

@@ -63,13 +63,17 @@ final class PAI_Provider_Custom_Route {
     }
 
     private function openai_image_body($project, $prompt, $format) {
+        $model = trim((string) ($project['model_name'] ?? ''));
         $body = array(
-            'model' => $project['model_name'],
+            'model' => $model,
             'prompt' => $prompt,
             'n' => 1,
             'size' => $this->openai_size($format),
-            'response_format' => 'url',
         );
+
+        if (!$this->is_gpt_image_model($model)) {
+            $body['response_format'] = 'url';
+        }
 
         if (!empty($project['negative_prompt'])) {
             $body['negative_prompt'] = $project['negative_prompt'];
@@ -121,6 +125,15 @@ final class PAI_Provider_Custom_Route {
         }
 
         return new WP_Error('pai_no_image', 'Image API response did not contain a recognised image URL or base64 image. Check Debug Logs.');
+    }
+
+    private function is_gpt_image_model($model) {
+        $model = strtolower(trim((string) $model));
+        return $model === 'gpt-image-1'
+            || $model === 'gpt-image-1-mini'
+            || $model === 'gpt-image-1.5'
+            || $model === 'chatgpt-image-latest'
+            || strpos($model, 'gpt-image-') === 0;
     }
 
     private function openai_size($format) {
