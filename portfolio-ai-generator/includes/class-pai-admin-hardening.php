@@ -24,23 +24,9 @@ final class PAI_Admin_Hardening {
 
     public static function scrub_password_values($html) {
         foreach (array('openai_api_key', 'gemini_api_key', 'api_key') as $name) {
-            $pattern = '/(<input\b(?=[^>]*\btype=["\']password["\'])(?=[^>]*\bname=["\']' . preg_quote($name, '/') . '["\'])(?=[^>]*\bvalue=["\']))([^"\']*)(["\'][^>]*>)/i';
-            $html = preg_replace($pattern, '$1$3', $html);
+            $pattern = '/(<input\b(?=[^>]*\btype=["\']password["\'])(?=[^>]*\bname=["\']' . preg_quote($name, '/') . '["\'])([^>]*?)\bvalue=["\'][^"\']*["\']([^>]*>)/i';
+            $html = preg_replace($pattern, '$1$2value="" placeholder="Configured / leave blank to keep existing"$3', $html);
         }
-
-        $html = str_replace(
-            array(
-                'name="openai_api_key" value=""',
-                'name="gemini_api_key" value=""',
-                'name="api_key" value=""',
-            ),
-            array(
-                'name="openai_api_key" value="" placeholder="Configured / leave blank to keep existing"',
-                'name="gemini_api_key" value="" placeholder="Configured / leave blank to keep existing"',
-                'name="api_key" value="" placeholder="Configured / leave blank to keep existing"',
-            ),
-            $html
-        );
 
         return $html;
     }
@@ -84,7 +70,7 @@ final class PAI_Admin_Hardening {
         $auth_mode = sanitize_key(wp_unslash($_POST['auth_mode'] ?? 'auto'));
         update_option(PAI_Constants::OPT_AUTH_MODE, in_array($auth_mode, array('auto', 'bearer', 'raw', 'none'), true) ? $auth_mode : 'auto', false);
 
-        self::update_secret_if_present(PAI_Constants::OPT_GEMINI_API_KEY, 'gemini_api_key', false);
+        self::update_secret_if_present(PAI_Constants::OPT_GEMINI_API_KEY, 'gemini_api_key', defined('PORTFOLIO_AI_GEMINI_API_KEY'));
         update_option(PAI_Constants::OPT_GEMINI_MODEL, sanitize_text_field(wp_unslash($_POST['gemini_model'] ?? 'gemini-2.5-flash-image')), false);
         update_option(PAI_Constants::OPT_GEMINI_PROMPT_LIMIT, max(200, min(12000, absint($_POST['gemini_prompt_limit'] ?? 4000))), false);
 
