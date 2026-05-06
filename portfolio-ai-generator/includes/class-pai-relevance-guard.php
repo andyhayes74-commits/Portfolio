@@ -68,51 +68,70 @@ final class PAI_Relevance_Guard {
         $intent = trim((string) ($project['relevance_allowed_intent'] ?? ''));
         if ($intent === '') {
             return array(
-                'decision' => 'allow',
-                'reason' => 'No allowed intent configured.',
+                'decision' => 'reject',
+                'reason' => 'Smart relevance guard is enabled but no allowed intent is configured.',
             );
         }
 
         $provider = PAI_Projects::resolve_provider($project);
 
-        $prompt = "You are a prompt relevance classifier for a WordPress image-generation plugin.\n\n"
-            . "Project intent:\n" . $intent . "\n\n"
+        $prompt = "You are a strict prompt relevance classifier for a WordPress image-generation plugin.\n\n"
+            . "Project allowed intent, including all hard limits:\n" . $intent . "\n\n"
             . "User prompt:\n" . $user_prompt . "\n\n"
-            . "Decide whether the user prompt fits the project intent.\n"
-            . "Be permissive when the prompt could reasonably fit the project.\n"
-            . "Return ONLY valid JSON using this exact format:\n"
+            . "Decision rules:\n"
+            . "1. The user prompt must satisfy the project allowed intent.\n"
+            . "2. Treat geographic limits, subject limits, style limits, and project-scope limits as hard requirements.\n"
+            . "3. If the project intent says United Kingdom, UK, Britain, England, Scotland, Wales, or Northern Ireland, reject places outside that scope.\n"
+            . "4. Reject famous landmarks, countries, cities, or subjects that clearly sit outside the allowed scope.\n"
+            . "5. Reject unrelated requests such as logos, UI, coding, essays, adult content, weapon design, or general adverts unless the project intent explicitly allows them.\n"
+            . "6. Be permissive only when the prompt is genuinely ambiguous but plausibly fits the project.\n"
+            . "7. If uncertain whether a named place fits a strict geographic scope, reject rather than allow.\n"
+            . "8. Return ONLY valid JSON. No markdown. No code fence. No explanation outside JSON.\n\n"
+            . "JSON format:\n"
             . "{\"decision\":\"allow\",\"reason\":\"short reason\"}\n"
             . "or\n"
             . "{\"decision\":\"reject\",\"reason\":\"short reason\"}";
+
+        PAI_Logger::log('info', 'Smart relevance check started', array(
+            'project' => $project['slug'] ?? '',
+            'provider' => $provider,
+            'intent_length' => strlen($intent),
+            'prompt_length' => strlen($user_prompt),
+        ));
 
         if ($provider === 'gemini_direct') {
             $result = self::gemini_text_check($prompt);
         } elseif ($provider === 'openai_direct') {
             $result = self::openai_text_check($prompt);
         } else {
+            PAI_Logger::log('error', 'Smart relevance check unavailable for provider', array(
+                'project' => $project['slug'] ?? '',
+                'provider' => $provider,
+            ));
+
             return array(
-                'decision' => 'allow',
-                'reason' => 'Smart relevance check unavailable for provider.',
+                'decision' => 'reject',
+                'reason' => 'Smart relevance guard is unavailable for the selected provider.',
             );
         }
 
         if (is_wp_error($result)) {
-            PAI_Logger::log('error', 'Smart relevance check failed', array(
+            PAI_Logger::log('error', 'Smart relevance check failed closed', array(
                 'project' => $project['slug'] ?? '',
                 'provider' => $provider,
                 'error' => $result->get_error_message(),
             ));
 
             return array(
-                'decision' => 'allow',
-                'reason' => 'Classifier failed open.',
+                'decision' => 'reject',
+                'reason' => 'Smart relevance guard could not verify this prompt.',
             );
         }
 
         PAI_Logger::log('info', 'Smart relevance decision', array(
             'project' => $project['slug'] ?? '',
             'provider' => $provider,
-            'decision' => $result['decision'] ?? 'allow',
+            'decision' => $result['decision'] ?? 'reject',
             'reason' => $result['reason'] ?? '',
         ));
 
@@ -141,6 +160,10 @@ final class PAI_Relevance_Guard {
                             ),
                         ),
                     ),
+                    'generationConfig' => array(
+                        'temperature' => 0,
+                        'responseMimeType' => 'application/json',
+                    ),
                 )),
             )
         );
@@ -167,7 +190,12 @@ final class PAI_Relevance_Guard {
                 'body' => wp_json_encode(array(
                     'model' => 'gpt-4o-mini',
                     'temperature' => 0,
+                    'response_format' => array('type' => 'json_object'),
                     'messages' => array(
+                        array(
+                            'role' => 'system',
+                            'content' => 'Return only valid JSON for a binary allow/reject relevance decision.',
+                        ),
                         array(
                             'role' => 'user',
                             'content' => $prompt,
@@ -205,16 +233,21 @@ final class PAI_Relevance_Guard {
             $content = $json['choices'][0]['message']['content'] ?? '';
         }
 
-        $decoded = json_decode(trim($content), true);
+        $content = trim((string) $content);
+        $content = preg_replace('/^```(?:json)?\s*/i', '', $content);
+        $content = preg_replace('/\s*```$/', '', $content);
+        $content = trim($content);
+
+        $decoded = json_decode($content, true);
 
         if (!is_array($decoded)) {
             return new WP_Error('invalid_classifier_output', 'Classifier did not return valid JSON.');
         }
 
-        $decision = sanitize_key($decoded['decision'] ?? 'allow');
+        $decision = sanitize_key($decoded['decision'] ?? 'reject');
 
         return array(
-            'decision' => $decision === 'reject' ? 'reject' : 'allow',
+            'decision' => $decision === 'allow' ? 'allow' : 'reject',
             'reason' => sanitize_text_field($decoded['reason'] ?? ''),
         );
     }
