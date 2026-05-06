@@ -19,6 +19,11 @@ final class PAI_Admin_V16_UI {
         }
 
         $edit = isset($_GET['edit']) ? sanitize_key(wp_unslash($_GET['edit'])) : '';
+        $project = $edit ? PAI_Projects::get($edit) : PAI_Projects::defaults();
+        if (!$project) {
+            $project = PAI_Projects::defaults();
+        }
+        $project = wp_parse_args($project, PAI_Projects::defaults($edit));
         ?>
         <script>
         (function () {
@@ -65,12 +70,20 @@ final class PAI_Admin_V16_UI {
                 return;
             }
 
+            function escapeAttr(value) {
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+            }
+
             function input(name, value, attrs) {
-                return '<input class="regular-text" name="' + name + '" value="' + String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '" ' + (attrs || '') + '>';
+                return '<input class="regular-text" name="' + name + '" value="' + escapeAttr(value) + '" ' + (attrs || '') + '>';
             }
 
             function textarea(name, value, rows) {
-                return '<textarea class="large-text" rows="' + (rows || 3) + '" name="' + name + '">' + String(value).replace(/</g, '&lt;') + '</textarea>';
+                return '<textarea class="large-text" rows="' + (rows || 3) + '" name="' + name + '">' + String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>';
             }
 
             function select(name, selected, options) {
@@ -82,20 +95,32 @@ final class PAI_Admin_V16_UI {
                 return html;
             }
 
-            var values = {
-                frontend_heading: document.querySelector('[name="name"]') ? 'Create an image in the ' + document.querySelector('[name="name"]').value + ' style' : '',
-                frontend_description: '',
-                frontend_prompt_placeholder: 'Describe the image',
-                frontend_generate_button: 'Generate Image',
-                relevance_guard_mode: 'off',
-                relevance_allowed_intent: '',
-                relevance_rejection_message: 'That prompt does not fit this project.',
-                relevance_basic_blocklist: 'logo, website, app ui, code, essay, cv, weapon'
-            };
+            var values = <?php echo wp_json_encode(array(
+                'frontend_heading' => (string) ($project['frontend_heading'] ?? ''),
+                'frontend_description' => (string) ($project['frontend_description'] ?? ''),
+                'frontend_prompt_placeholder' => (string) ($project['frontend_prompt_placeholder'] ?? ''),
+                'frontend_generate_button' => (string) ($project['frontend_generate_button'] ?? ''),
+                'relevance_guard_mode' => (string) ($project['relevance_guard_mode'] ?? 'off'),
+                'relevance_allowed_intent' => (string) ($project['relevance_allowed_intent'] ?? ''),
+                'relevance_rejection_message' => (string) ($project['relevance_rejection_message'] ?? 'That prompt does not fit this project.'),
+                'relevance_basic_blocklist' => (string) ($project['relevance_basic_blocklist'] ?? 'logo, website, app ui, code, essay, cv, weapon'),
+            )); ?>;
 
-            var hiddenPromptField = document.querySelector('[name="hidden_prompt"]');
-            if (hiddenPromptField && hiddenPromptField.dataset.v16Processed !== '1') {
-                hiddenPromptField.dataset.v16Processed = '1';
+            if (!values.frontend_heading) {
+                var nameField = document.querySelector('[name="name"]');
+                values.frontend_heading = nameField && nameField.value ? 'Create an image in the ' + nameField.value + ' style' : '';
+            }
+
+            if (!values.frontend_prompt_placeholder) {
+                values.frontend_prompt_placeholder = 'Describe the image';
+            }
+
+            if (!values.frontend_generate_button) {
+                values.frontend_generate_button = 'Generate Image';
+            }
+
+            if (!values.relevance_rejection_message) {
+                values.relevance_rejection_message = 'That prompt does not fit this project.';
             }
 
             var html = '';
