@@ -72,7 +72,7 @@
                 html += '<div class="pai-result__actions">';
                 html += '<a class="pai-button pai-button--secondary" href="' + escapeHtml(imageUrl) + '" download target="_blank" rel="noopener noreferrer">Download</a>';
                 if (response.data.can_submit_gallery) {
-                    html += '<button class="pai-button pai-submit-gallery" type="button" data-id="' + parseInt(response.data.id, 10) + '">Submit to Gallery</button>';
+                    html += '<button class="pai-button pai-submit-gallery" type="button" data-id="' + parseInt(response.data.id, 10) + '" data-gallery-token="' + escapeHtml(response.data.gallery_token || '') + '">Submit to Gallery</button>';
                 }
                 html += '</div></div>';
 
@@ -101,7 +101,8 @@
             action: 'pai_submit_gallery',
             nonce: $form.find('input[name="nonce"]').val(),
             project: project,
-            id: $button.data('id')
+            id: $button.data('id'),
+            gallery_token: $button.data('gallery-token')
         })
             .done(function (response) {
                 if (!response || !response.success) {

@@ -137,7 +137,8 @@ final class PAI_Generator {
         $provider_name = PAI_Projects::resolve_provider($project);
         $model_name = $this->model_name_for_provider($provider_name, $project);
         $full_prompt = PAI_Projects::compile_prompt($project, $user_prompt, $format);
-        $image_id = $this->insert_image_row($slug, $user_prompt, $full_prompt, $format, $model_name);
+        $gallery_token = wp_generate_password(32, false, false);
+        $image_id = $this->insert_image_row($slug, $user_prompt, $full_prompt, $format, $model_name, $gallery_token);
 
         if (is_wp_error($image_id)) {
             PAI_Logger::log('error', 'Could not create generation record', array(
@@ -222,6 +223,7 @@ final class PAI_Generator {
             'id' => $image_id,
             'image_url' => esc_url_raw($saved['url']),
             'can_submit_gallery' => $project['gallery_mode'] !== 'off',
+            'gallery_token' => $project['gallery_mode'] !== 'off' ? $gallery_token : '',
             'message' => 'Image generated successfully.',
         ));
     }
@@ -255,7 +257,7 @@ final class PAI_Generator {
         return in_array($format, PAI_Projects::allowed_generation_formats(), true) ? $format : 'portrait';
     }
 
-    private function insert_image_row($slug, $user_prompt, $full_prompt, $format, $model_name) {
+    private function insert_image_row($slug, $user_prompt, $full_prompt, $format, $model_name, $gallery_token) {
         global $wpdb;
         $now = current_time('mysql');
 
@@ -269,10 +271,11 @@ final class PAI_Generator {
                 'aspect_ratio' => $format,
                 'model_name' => $model_name,
                 'ip_hash' => $this->ip_hash($slug),
+                'gallery_token' => $gallery_token,
                 'created_at' => $now,
                 'updated_at' => $now,
             ),
-            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
         );
 
         $id = (int) $wpdb->insert_id;
