@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Portfolio AI Generator
- * Description: Controlled AI image generator for portfolio project pages with modular providers, hidden project prompts, moderation, customisable galleries, prompt relevance checks, frontend text controls, expanded admin guidance, and safe debug logging.
- * Version: 1.6.1
+ * Description: Controlled AI image generator for portfolio project pages with modular providers, hidden project prompts, moderation, customisable galleries, prompt relevance checks, frontend text controls, provider testing, expanded admin guidance, and safe debug logging.
+ * Version: 1.6.2
  * Author: Andy Hayes
  * Text Domain: portfolio-ai-generator
  */
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('PAI_VERSION', '1.6.1');
+define('PAI_VERSION', '1.6.2');
 define('PAI_PLUGIN_FILE', __FILE__);
 define('PAI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PAI_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -30,6 +30,7 @@ require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin.php';
 require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin-gallery-customizer.php';
 require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin-v16-ui.php';
 require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin-help.php';
+require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin-provider-tests.php';
 require_once PAI_PLUGIN_DIR . 'includes/class-pai-plugin.php';
 
 register_activation_hook(__FILE__, array('PAI_Plugin', 'activate'));
