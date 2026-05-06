@@ -31,6 +31,7 @@ require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin-gallery-customizer.php';
 require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin-v16-ui.php';
 require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin-help.php';
 require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin-provider-tests.php';
+require_once PAI_PLUGIN_DIR . 'includes/class-pai-admin-hardening.php';
 require_once PAI_PLUGIN_DIR . 'includes/class-pai-plugin.php';
 
 register_activation_hook(__FILE__, array('PAI_Plugin', 'activate'));
