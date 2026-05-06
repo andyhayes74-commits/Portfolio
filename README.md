@@ -1,12 +1,12 @@
 # Portfolio AI Generator
 
-**Current stable version:** v1.5.0  
+**Current stable version:** v1.6.1  
 **Branch:** `main`  
 **Project:** WordPress plugin for controlled AI image generation on portfolio project pages
 
 Portfolio AI Generator lets visitors generate AI images inside a controlled project style. It is designed for creative portfolios, AI art projects, campaign demos, case studies, and interactive project pages where the site owner wants consistent outputs rather than completely open-ended prompting.
 
-The plugin supports hidden project prompts, public style summaries, multi-provider image generation, WordPress Media Library saving, moderation, configurable galleries, reference images, and safe debug logging.
+The plugin supports hidden project prompts, public style summaries, multi-provider image generation, WordPress Media Library saving, moderation, configurable galleries, reference images, prompt relevance checks, frontend branding controls, and safe debug logging.
 
 ---
 
@@ -15,10 +15,17 @@ The plugin supports hidden project prompts, public style summaries, multi-provid
 `main` now contains the latest tested stable version:
 
 ```text
-v1.5.0
+v1.6.1
 ```
 
-v1.5.0 includes the v1.4.1 multi-provider system and adds deeper per-project gallery customisation.
+v1.6.1 includes:
+
+```text
+v1.4.1 multi-provider generation
+v1.5 gallery customisation
+v1.6 relevance guard and frontend branding
+v1.6.1 expanded backend admin guidance
+```
 
 Continue new work from `main`.
 
@@ -38,7 +45,7 @@ The detailed plugin README is here:
 portfolio-ai-generator/README.md
 ```
 
-Use the plugin README for setup, provider configuration, shortcode usage, reference image guidance, gallery styling, testing, and rollback notes.
+Use the plugin README for setup, provider configuration, shortcode usage, reference image guidance, gallery styling, moderation flow, relevance checks, testing, and rollback notes.
 
 ---
 
@@ -57,6 +64,8 @@ Use the plugin README for setup, provider configuration, shortcode usage, refere
 - Generated images saved to WordPress Media Library
 - Gallery submission workflow
 - Project-level gallery customisation
+- Frontend branding controls
+- Prompt relevance guard system
 - Gallery image limit for latest approved images
 - Auto-refresh gallery after approved submission
 - Backend image actions: approve, reject, hide, soft delete
@@ -64,6 +73,7 @@ Use the plugin README for setup, provider configuration, shortcode usage, refere
 - History view
 - Debug logs with redaction
 - Daily generation limits
+- Expanded backend field descriptions
 - Modular PHP structure for safer maintenance
 
 ---
@@ -119,7 +129,48 @@ has_reference_image: true
 
 ---
 
-## Gallery customisation in v1.5.0
+## Frontend branding controls
+
+Each project can now customise the public generator text.
+
+Available controls:
+
+```text
+Generator heading
+Generator description
+Prompt placeholder text
+Generate button text
+```
+
+This allows each project to feel visually and tonally distinct instead of sharing the same default generator wording.
+
+---
+
+## Prompt relevance & safety system
+
+Projects can now optionally validate prompts before image generation.
+
+Available modes:
+
+```text
+Off
+Basic local filter
+Smart AI check
+```
+
+Smart mode uses the selected provider to classify whether a prompt fits the intended project theme before spending image-generation credits.
+
+Additional controls:
+
+```text
+Allowed prompt intent
+Custom rejection message
+Basic blocked-term list
+```
+
+---
+
+## Gallery customisation in v1.5+
 
 Each project can now have its own gallery layout and visual style.
 
@@ -152,6 +203,16 @@ This allows different portfolio projects to have different gallery styles while 
 
 ---
 
+## Backend UX improvements in v1.6+
+
+- Add Project form hidden by default
+- Existing projects prioritised in admin workflow
+- Cleaner edit flow
+- Expanded inline help text for important settings
+- Guidance for prompts, providers, relevance checks, and galleries
+
+---
+
 ## Shortcodes
 
 Generator:
@@ -176,29 +237,23 @@ Only approved images appear in the public gallery.
 
 ---
 
-## v1.5.0 highlights
+## v1.6.1 highlights
 
-- Added per-project gallery layout and style controls.
-- Added desktop, tablet, and mobile column controls.
-- Added gallery gap, max width, and alignment controls.
-- Added card background, text, border, radius, padding, and shadow controls.
-- Added caption position, colour, overlay background, size, and word-limit controls.
-- Added scoped inline gallery styles so Elementor/theme CSS is less likely to override project settings.
-- Kept all v1.4.1 multi-provider generation features.
+- Added expanded backend admin descriptions.
+- Added inline explanations for prompts, providers, relevance checks, and galleries.
+- Improved admin usability for non-technical users.
+- Continued public-release preparation work.
 
 ---
 
-## v1.4.1 highlights included
+## v1.6.0 highlights
 
-- Added OpenAI Direct image provider.
-- Added OpenAI settings for credential, base URL, image model, and quality.
-- Added OpenAI Direct to the global default provider selector.
-- Added per-project image provider selector.
-- Added OpenAI reference-image support through the image edits endpoint.
-- Fixed gallery shortcode empty-limit handling so galleries no longer collapse to one image.
-- Kept Gemini Direct and Custom Route providers.
-- Routed generation through the selected project provider.
-- Preserved the shared Media Library, History, Moderation, and Gallery pipeline.
+- Added project-level frontend branding controls.
+- Added prompt relevance guard system.
+- Added Smart AI relevance checking.
+- Added custom rejection messaging.
+- Added backend UX cleanup.
+- Added cleaner project management flow.
 
 ---
 
@@ -216,18 +271,14 @@ Before treating a fresh install as stable, test:
 
 - plugin activation
 - project edit page loads
+- Frontend Text & Branding settings save correctly
+- relevance settings save correctly
+- relevance rejection flow works
+- smart relevance guard works
 - Gallery Layout & Style section appears
 - desktop/tablet/mobile columns save correctly
 - column counts affect frontend gallery layout
-- card background colour works
-- card text colour works
-- card border and border colour work
-- card radius works
-- card padding works
-- card shadow works
-- caption below image works
-- caption overlay works
-- gallery max width and alignment work
+- gallery styling still works correctly
 - gallery still shows latest approved images
 - gallery auto-refresh still works
 - OpenAI Direct still works
